@@ -16,7 +16,7 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Groq AI API
-GROQ_API_KEY=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
+GROQ_API_KEY=gsk_placeholder_groq_key_for_development_only
 
 # Supabase Configuration
 SUPABASE_URL=your_supabase_project_url
