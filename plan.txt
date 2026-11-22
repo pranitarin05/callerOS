@@ -1,0 +1,516 @@
+AI CallerOS — Product Requirements & Implementation Brief
+Version: 1.0
+Product type: AI Voice Agent + CRM SaaS
+Development approach: Local-first MVP, deployment-ready architecture
+1. Product overview
+AI CallerOS is an AI-powered CRM that helps businesses manage leads, automate outbound calling, qualify prospects, summarize conversations and schedule follow-ups.
+
+The main workflow:
+1. Create a lead.
+2. Initiate an AI-powered call.
+3. Have a natural conversation.
+4. Extract lead requirements and interest.
+5. Update the CRM using backend tools.
+6. Store transcript, summary and call outcome.
+7. Schedule a follow-up.
+2. Technology stack
+Layer	Technology
+Frontend	Next.js, TypeScript
+Styling	Tailwind CSS, shadcn/ui
+Charts	Recharts
+Backend	Python, FastAPI
+Database	Supabase PostgreSQL
+Authentication	Supabase Auth
+ORM	SQLAlchemy
+Migrations	Alembic
+AI	OpenAI API
+Voice	Vapi
+Agent workflow	Python functions initially; LangGraph later
+Vector search	pgvector, later milestone
+Cache	Redis, optional
+Packaging	Docker
+Version control	Git and GitHub
+Future deployment	Vercel, Render, Supabase3. MVP features
+P0 — Required
+- User registration and login.
+- CRM dashboard.
+- Create, view, edit and search leads.
+- Lead status management.
+- AI conversation simulator.
+- AI lead qualification.
+- Backend tool execution.
+- Vapi outbound call integration.
+- Vapi webhook handling.
+- Call history.
+- Transcript and summary storage.
+- Sentiment and call outcome extraction.
+- Follow-up creation and management.
+P1 — After core workflow works
+- Knowledge base and document upload.
+- RAG-based answers.
+- Advanced call analytics.
+- Configurable agent instructions.
+- Human handoff.
+P2 — Future enhancements
+- Multi-tenant organizations.
+- Role-based permissions.
+- Multiple voice agents.
+- Campaign management.
+- Advanced reporting.
+- Automated scheduled calling.
+4. Main pages
+1. Dashboard — business metrics and recent activity.
+2. Leads — searchable lead table and lead details.
+3. Calls — call history, transcript, summary and outcome.
+4. Follow-ups — scheduled callbacks and task status.
+5. Knowledge Base — uploaded documents and FAQs.
+6. Settings — business configuration and agent instructions.
+5. Database entities
+- profiles
+- leads
+- calls
+- transcripts
+- call_summaries
+- followups
+- agent_configs
+- knowledge_documents
+Use UUID primary keys, timestamps, appropriate foreign keys and indexes. Associate each user's records with an authenticated user ID. Plan for organization-level isolation later.
+6. Backend API
+- POST /api/v1/leads
+- GET /api/v1/leads
+- GET /api/v1/leads/{id}
+- PATCH /api/v1/leads/{id}
+- POST /api/v1/calls/outbound
+- GET /api/v1/calls
+- GET /api/v1/calls/{id}
+- POST /api/v1/webhooks/vapi
+- POST /api/v1/followups
+- GET /api/v1/analytics
+7. AI agent tools
+Implement validated backend functions:
+- get_lead_details
+- update_lead
+- search_company_knowledge
+- schedule_followup
+- end_call
+The LLM must never directly execute SQL or bypass backend authorization.
+8. Calling modes
+Demo mode
+A simulated conversation that works without paid telephony credentials. It must demonstrate the complete workflow, including AI responses, tool execution, CRM updates and summary generation.
+Live mode
+Vapi initiates a real outbound call when the required API keys, assistant configuration, phone number and credits are available.
+
+Never present a simulated call as a real phone call.
+9. AI qualification output
+The agent should return structured data similar to:
+{
+  "lead_status": "qualified",
+  "interest": "high",
+  "requirements": "Automate customer follow-ups",
+  "sentiment": "positive",
+  "call_outcome": "interested",
+  "next_action": "Schedule product demo"
+}
+These are example values, not hardcoded outputs.
+10. Security and reliability
+- Keep secrets in environment variables.
+- Never expose private API keys in frontend code.
+- Verify authentication on protected endpoints.
+- Validate webhook authentication.
+- Make webhook processing idempotent.
+- Validate tool arguments.
+- Enforce record ownership.
+- Handle provider timeouts and API failures.
+- Avoid duplicate calls and follow-ups.
+- Respect consent, opt-outs and do-not-call requests.
+- Protect call transcripts and personal information.
+- Log errors without exposing secrets.
+11. Acceptance criteria
+The MVP is complete when:
+- Users can register and log in.
+- Leads can be created, edited and searched.
+- Demo conversations can run successfully.
+- AI can extract qualification information.
+- Backend tools update the correct lead.
+- Calls, transcripts and summaries persist in PostgreSQL.
+- Follow-ups can be scheduled.
+- Dashboard metrics use actual database data.
+- Live Vapi integration works when credentials are available.
+- The application starts locally using documented commands.
+12. Development order
+1. Project structure and configuration.
+2. Database and authentication.
+3. CRM backend and frontend.
+4. Dashboard.
+5. AI conversation simulator.
+6. Lead qualification and backend tools.
+7. Vapi integration.
+8. Webhook processing.
+9. Transcript and summary storage.
+10. Follow-ups and testing.
+11. Docker and deployment documentation.
+
+13. Master implementation prompt
+You are a senior full-stack engineer and AI systems architect.
+
+Build AI CallerOS, an AI-powered Voice Calling Agent and Smart CRM SaaS application, according to the requirements in this document.
+Technology requirements
+Frontend:
+- Next.js with TypeScript.
+- Tailwind CSS.
+- shadcn/ui.
+- Recharts.
+- Responsive SaaS dashboard.
+Backend:
+- Python FastAPI.
+- Pydantic.
+- SQLAlchemy.
+- Alembic.
+- REST APIs.
+- Proper modular architecture.
+Database:
+- Supabase PostgreSQL.
+- Supabase Auth.
+- Use environment-based configuration.
+- Keep the database portable to standard PostgreSQL.
+AI:
+- OpenAI API.
+- Structured outputs for lead qualification.
+- Backend-controlled tools.
+- Vapi integration for real voice calls.
+- Simulated voice/conversation mode for local development without paid services.
+Architecture rules
+1. Keep frontend and backend separate.
+2. Keep business logic outside route handlers.
+3. Use service and repository layers where appropriate.
+4. Create reusable frontend components.
+5. Use typed API requests and responses.
+6. Implement consistent error handling.
+7. Validate every input.
+8. Add logging.
+9. Use database migrations.
+10. Do not hardcode secrets or credentials.
+11. Do not put private API keys in frontend environment variables.
+12. Never fabricate successful API or voice-call responses.
+13. Do not use fake data in production views.
+14. Keep the application deployment-ready for Vercel, Render and Supabase.
+Voice agent requirements
+The agent should:
+- Introduce itself as an AI assistant.
+- Ask whether the prospect is available to talk.
+- Understand the prospect's requirements.
+- Ask relevant follow-up questions.
+- Qualify the lead.
+- Use backend tools to update CRM records.
+- Offer a human callback when necessary.
+- Respect opt-outs and call restrictions.
+- Never invent business or product information.
+Implementation strategy
+Do not generate the entire project in one step.
+
+First inspect the repository and report:
+- Existing files.
+- Existing architecture.
+- Missing dependencies.
+- Potential conflicts.
+Then create an implementation plan.
+
+Implement one milestone at a time:
+
+Milestone 1: Project setup, configuration, database and authentication.
+
+Milestone 2: Lead management APIs and CRM frontend.
+
+Milestone 3: Dashboard and lead details.
+
+Milestone 4: AI conversation simulator and qualification.
+
+Milestone 5: Backend tools and CRM updates.
+
+Milestone 6: Vapi outbound calling and webhook integration.
+
+Milestone 7: Call transcripts, summaries, sentiment and outcomes.
+
+Milestone 8: Follow-up scheduling.
+
+Milestone 9: Tests, Docker and deployment documentation.
+
+After every milestone:
+- Run the relevant tests.
+- Fix errors before proceeding.
+- Verify database persistence.
+- Update README.md.
+- Explain what was implemented.
+- List remaining tasks.
+Important constraints
+- Build a working MVP, not a UI-only prototype.
+- Do not skip backend functionality.
+- Do not create unnecessary microservices.
+- Do not introduce Kafka or Kubernetes into this MVP.
+- Do not add LangGraph until the basic agent workflow works.
+- Do not implement RAG before the core calling workflow works.
+- Use mock providers only in explicitly selected demo mode.
+- Keep all external integrations replaceable.
+- Never claim a feature is complete unless it has been implemented and tested.
+First task
+Start by inspecting the repository and setting up the project structure.
+
+Do not start generating every feature at once. Present the initial architecture and milestone plan, then implement Milestone 1. 
+AI CallerOS — Product Requirements & Implementation Brief
+Version: 1.0
+Product type: AI Voice Agent + CRM SaaS
+Development approach: Local-first MVP, deployment-ready architecture
+1. Product overview
+AI CallerOS is an AI-powered CRM that helps businesses manage leads, automate outbound calling, qualify prospects, summarize conversations and schedule follow-ups.
+
+The main workflow:
+1. Create a lead.
+2. Initiate an AI-powered call.
+3. Have a natural conversation.
+4. Extract lead requirements and interest.
+5. Update the CRM using backend tools.
+6. Store transcript, summary and call outcome.
+7. Schedule a follow-up.
+2. Technology stack
+Layer	Technology
+Frontend	Next.js, TypeScript
+Styling	Tailwind CSS, shadcn/ui
+Charts	Recharts
+Backend	Python, FastAPI
+Database	Supabase PostgreSQL
+Authentication	Supabase Auth
+ORM	SQLAlchemy
+Migrations	Alembic
+AI	OpenAI API
+Voice	Vapi
+Agent workflow	Python functions initially; LangGraph later
+Vector search	pgvector, later milestone
+Cache	Redis, optional
+Packaging	Docker
+Version control	Git and GitHub
+Future deployment	Vercel, Render, Supabase3. MVP features
+P0 — Required
+- User registration and login.
+- CRM dashboard.
+- Create, view, edit and search leads.
+- Lead status management.
+- AI conversation simulator.
+- AI lead qualification.
+- Backend tool execution.
+- Vapi outbound call integration.
+- Vapi webhook handling.
+- Call history.
+- Transcript and summary storage.
+- Sentiment and call outcome extraction.
+- Follow-up creation and management.
+P1 — After core workflow works
+- Knowledge base and document upload.
+- RAG-based answers.
+- Advanced call analytics.
+- Configurable agent instructions.
+- Human handoff.
+P2 — Future enhancements
+- Multi-tenant organizations.
+- Role-based permissions.
+- Multiple voice agents.
+- Campaign management.
+- Advanced reporting.
+- Automated scheduled calling.
+4. Main pages
+1. Dashboard — business metrics and recent activity.
+2. Leads — searchable lead table and lead details.
+3. Calls — call history, transcript, summary and outcome.
+4. Follow-ups — scheduled callbacks and task status.
+5. Knowledge Base — uploaded documents and FAQs.
+6. Settings — business configuration and agent instructions.
+5. Database entities
+- profiles
+- leads
+- calls
+- transcripts
+- call_summaries
+- followups
+- agent_configs
+- knowledge_documents
+Use UUID primary keys, timestamps, appropriate foreign keys and indexes. Associate each user's records with an authenticated user ID. Plan for organization-level isolation later.
+6. Backend API
+- POST /api/v1/leads
+- GET /api/v1/leads
+- GET /api/v1/leads/{id}
+- PATCH /api/v1/leads/{id}
+- POST /api/v1/calls/outbound
+- GET /api/v1/calls
+- GET /api/v1/calls/{id}
+- POST /api/v1/webhooks/vapi
+- POST /api/v1/followups
+- GET /api/v1/analytics
+7. AI agent tools
+Implement validated backend functions:
+- get_lead_details
+- update_lead
+- search_company_knowledge
+- schedule_followup
+- end_call
+The LLM must never directly execute SQL or bypass backend authorization.
+8. Calling modes
+Demo mode
+A simulated conversation that works without paid telephony credentials. It must demonstrate the complete workflow, including AI responses, tool execution, CRM updates and summary generation.
+Live mode
+Vapi initiates a real outbound call when the required API keys, assistant configuration, phone number and credits are available.
+
+Never present a simulated call as a real phone call.
+9. AI qualification output
+The agent should return structured data similar to:
+{
+  "lead_status": "qualified",
+  "interest": "high",
+  "requirements": "Automate customer follow-ups",
+  "sentiment": "positive",
+  "call_outcome": "interested",
+  "next_action": "Schedule product demo"
+}
+These are example values, not hardcoded outputs.
+10. Security and reliability
+- Keep secrets in environment variables.
+- Never expose private API keys in frontend code.
+- Verify authentication on protected endpoints.
+- Validate webhook authentication.
+- Make webhook processing idempotent.
+- Validate tool arguments.
+- Enforce record ownership.
+- Handle provider timeouts and API failures.
+- Avoid duplicate calls and follow-ups.
+- Respect consent, opt-outs and do-not-call requests.
+- Protect call transcripts and personal information.
+- Log errors without exposing secrets.
+11. Acceptance criteria
+The MVP is complete when:
+- Users can register and log in.
+- Leads can be created, edited and searched.
+- Demo conversations can run successfully.
+- AI can extract qualification information.
+- Backend tools update the correct lead.
+- Calls, transcripts and summaries persist in PostgreSQL.
+- Follow-ups can be scheduled.
+- Dashboard metrics use actual database data.
+- Live Vapi integration works when credentials are available.
+- The application starts locally using documented commands.
+12. Development order
+1. Project structure and configuration.
+2. Database and authentication.
+3. CRM backend and frontend.
+4. Dashboard.
+5. AI conversation simulator.
+6. Lead qualification and backend tools.
+7. Vapi integration.
+8. Webhook processing.
+9. Transcript and summary storage.
+10. Follow-ups and testing.
+11. Docker and deployment documentation.
+
+13. Master implementation prompt
+You are a senior full-stack engineer and AI systems architect.
+
+Build AI CallerOS, an AI-powered Voice Calling Agent and Smart CRM SaaS application, according to the requirements in this document.
+Technology requirements
+Frontend:
+- Next.js with TypeScript.
+- Tailwind CSS.
+- shadcn/ui.
+- Recharts.
+- Responsive SaaS dashboard.
+Backend:
+- Python FastAPI.
+- Pydantic.
+- SQLAlchemy.
+- Alembic.
+- REST APIs.
+- Proper modular architecture.
+Database:
+- Supabase PostgreSQL.
+- Supabase Auth.
+- Use environment-based configuration.
+- Keep the database portable to standard PostgreSQL.
+AI:
+- OpenAI API.
+- Structured outputs for lead qualification.
+- Backend-controlled tools.
+- Vapi integration for real voice calls.
+- Simulated voice/conversation mode for local development without paid services.
+Architecture rules
+1. Keep frontend and backend separate.
+2. Keep business logic outside route handlers.
+3. Use service and repository layers where appropriate.
+4. Create reusable frontend components.
+5. Use typed API requests and responses.
+6. Implement consistent error handling.
+7. Validate every input.
+8. Add logging.
+9. Use database migrations.
+10. Do not hardcode secrets or credentials.
+11. Do not put private API keys in frontend environment variables.
+12. Never fabricate successful API or voice-call responses.
+13. Do not use fake data in production views.
+14. Keep the application deployment-ready for Vercel, Render and Supabase.
+Voice agent requirements
+The agent should:
+- Introduce itself as an AI assistant.
+- Ask whether the prospect is available to talk.
+- Understand the prospect's requirements.
+- Ask relevant follow-up questions.
+- Qualify the lead.
+- Use backend tools to update CRM records.
+- Offer a human callback when necessary.
+- Respect opt-outs and call restrictions.
+- Never invent business or product information.
+Implementation strategy
+Do not generate the entire project in one step.
+
+First inspect the repository and report:
+- Existing files.
+- Existing architecture.
+- Missing dependencies.
+- Potential conflicts.
+Then create an implementation plan.
+
+Implement one milestone at a time:
+
+Milestone 1: Project setup, configuration, database and authentication.
+
+Milestone 2: Lead management APIs and CRM frontend.
+
+Milestone 3: Dashboard and lead details.
+
+Milestone 4: AI conversation simulator and qualification.
+
+Milestone 5: Backend tools and CRM updates.
+
+Milestone 6: Vapi outbound calling and webhook integration.
+
+Milestone 7: Call transcripts, summaries, sentiment and outcomes.
+
+Milestone 8: Follow-up scheduling.
+
+Milestone 9: Tests, Docker and deployment documentation.
+
+After every milestone:
+- Run the relevant tests.
+- Fix errors before proceeding.
+- Verify database persistence.
+- Update README.md.
+- Explain what was implemented.
+- List remaining tasks.
+Important constraints
+- Build a working MVP, not a UI-only prototype.
+- Do not skip backend functionality.
+- Do not create unnecessary microservices.
+- Do not introduce Kafka or Kubernetes into this MVP.
+- Do not add LangGraph until the basic agent workflow works.
+- Do not implement RAG before the core calling workflow works.
+- Use mock providers only in explicitly selected demo mode.
+- Keep all external integrations replaceable.
+- Never claim a feature is complete unless it has been implemented and tested.
+First task
+Start by inspecting the repository and setting up the project structure.
+
+Do not start generating every feature at once. Present the initial architecture and milestone plan, then implement Milestone 1. 
