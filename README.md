@@ -94,7 +94,7 @@ AI CallerOS automates the entire lead qualification workflow:
 - `POST /api/v1/vapi/webhook` - Vapi call event webhook
 - `POST /api/v1/vapi/authenticate` - Vapi assistant authentication
 
-## 🔧 Local Development
+## 🛠️ Local Development
 
 ### Prerequisites
 - Python 3.11+
@@ -121,32 +121,6 @@ npm run dev
 The application will be available at:
 - Frontend: `http://localhost:3000`
 - Backend: `http://127.0.0.1:8000`
-
-### Environment Variables (.env)
-Create a `.env` file with:
-```env
-# Groq AI API
-GROQ_API_KEY=your_groq_key
-
-# Supabase Configuration
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Vapi Configuration (for live mode)
-VAPI_ASSISTANT_ID=your_assistant_id
-VAPI_PUBLIC_KEY=your_public_key
-VAPI_SECRET_KEY=your_secret_key  # Keep this secret!
-
-# Application Settings
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Backend Configuration
-API_V1_STR=/api/v1
-PROJECT_NAME=AI CallerOS
-```
 
 ### Docker Deployment
 ```bash
