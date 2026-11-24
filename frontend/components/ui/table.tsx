@@ -1,41 +1,30 @@
-import { cn } from "@/lib/utils"
+import * as React from "react";
 
-export interface TableHeaderProps {
-  className?: string
-}
-
-export function TableHeader({ className, ...props }: TableHeaderProps) {
+export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
-    <thead className={cn("border-b bg-muted", className)} {...props} />
-  )
+    <div className="overflow-x-auto">
+      <table className={`w-full border-collapse text-left ${className || ""}`} {...props} />
+    </div>
+  );
 }
 
-export interface TableRowProps {
-  className?: string
-}
-
-export function TableRow({ className, ...props }: TableRowProps) {
+export function TableHeader(props: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tr className={cn("hover:bg-muted/50", className)} {...props} />
-  )
+    <thead
+      className="border-b border-[#27272a] bg-[#121215] text-[11px] font-medium uppercase tracking-[0.04em] text-[#a1a1aa]"
+      {...props}
+    />
+  );
 }
 
-export interface TableCellProps {
-  className?: string
+export function TableBody(props: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody className="divide-y divide-[#1f1f23]" {...props} />;
 }
 
-export function TableCell({ className, ...props }: TableCellProps) {
-  return (
-    <td className={cn("p-3 text-sm", className)} {...props} />
-  )
+export function TableRow(props: React.HTMLAttributes<HTMLTableRowElement>) {
+  return <tr className="transition-colors hover:bg-[#18181b]" {...props} />;
 }
 
-export interface TableBodyProps {
-  className?: string
-}
-
-export function TableBody({ className, ...props }: TableBodyProps) {
-  return (
-    <tbody className={cn("divide-y divide-divide-muted", className)} {...props} />
-  )
+export function TableCell(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return <td className="px-4 py-3 text-sm text-[#e3e1ec]" {...props} />;
 }

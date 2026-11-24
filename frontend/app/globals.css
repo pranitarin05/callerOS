@@ -1,3 +1,72 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+:root {
+  --canvas: #09090b;
+  --surface-1: #121215;
+  --surface-2: #18181b;
+  --surface-3: #1f1f23;
+  --border: #27272a;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --font-display: "Manrope", sans-serif;
+  --font-body: "Hanken Grotesk", sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--canvas);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overscroll-behavior: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+.font-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.surface-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: 8px;
+}
+
+.surface-inset {
+  background: var(--canvas);
+  border: 1px solid var(--surface-3);
+  border-radius: 8px;
+}
+
+.hairline {
+  border-color: var(--border);
+}
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.35); opacity: 0.55; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.wave-bar {
+  transform-origin: center;
+  animation: wave 0.9s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.wave-active .wave-bar {
+  animation-play-state: running;
+}

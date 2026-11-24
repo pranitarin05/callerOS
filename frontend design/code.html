@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..700;1,300..700&amp;family=Manrope:wght@400..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-container": "#7a787b", "surface-container-low": "#1a1b22", "on-primary-fixed-variant": "#474649", "error-container": "#93000a", "on-secondary-container": "#b6b4b8", "secondary-fixed": "#e4e1e5", "background": "#12131a", "error": "#ffb4ab", "surface-container-highest": "#33343c", "tertiary": "#cec4c4", "tertiary-container": "#0c0808", "on-tertiary-fixed-variant": "#4c4545", "outline": "#919095", "on-surface": "#e3e1ec", "secondary-fixed-dim": "#c8c6c9", "inverse-primary": "#5f5e60", "surface-tint": "#c8c6c8", "secondary-container": "#47464a", "surface-dim": "#12131a", "primary": "#c8c6c8", "on-background": "#e3e1ec", "outline-variant": "#47464a", "on-surface-variant": "#c8c5ca", "secondary": "#c8c6c9", "tertiary-fixed": "#ebe0df", "on-primary": "#313032", "primary-fixed-dim": "#c8c6c8", "surface-container": "#1e1f26", "on-primary-fixed": "#1c1b1d", "on-tertiary-fixed": "#1f1a1a", "on-error-container": "#ffdad6", "surface-container-high": "#292931", "surface-container-lowest": "#0d0e15", "inverse-on-surface": "#2f3038", "on-tertiary-container": "#7f7777", "on-error": "#690005", "primary-fixed": "#e5e1e4", "surface": "#12131a", "primary-container": "#09090b", "surface-bright": "#383941", "on-secondary-fixed-variant": "#47464a", "on-tertiary": "#352f2f", "on-secondary-fixed": "#1b1b1e", "tertiary-fixed-dim": "#cec4c4", "inverse-surface": "#e3e1ec", "on-secondary": "#303033", "surface-variant": "#33343c" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-xl": "2.5rem", "space-xs": "0.25rem", "margin-mobile": "1.25rem", "space-sm": "0.5rem", "gutter": "1.5rem", "margin": "3rem", "space-lg": "1.5rem", "gutter-mobile": "1rem", "space-md": "1rem" }, "fontFamily": { "headline-sm": ["Manrope"], "headline-md": ["Manrope"], "display": ["Manrope"], "label-md": ["Hanken Grotesk"], "label-sm": ["Hanken Grotesk"], "display-mobile": ["Manrope"], "headline-lg-mobile": ["Manrope"], "title-md": ["Hanken Grotesk"], "body-sm": ["Hanken Grotesk"], "body-lg": ["Hanken Grotesk"], "headline-lg": ["Manrope"], "body-md": ["Hanken Grotesk"] }, "fontSize": { "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "500" }], "display": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }], "display-mobile": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.025em", "fontWeight": "600" }], "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }], "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0.005em", "fontWeight": "400" }] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 max-w-7xl mx-auto px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div><span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">CallerOS</span></div><span class="px-space-xs py-0.5 rounded text-label-sm font-label-sm text-on-surface-variant bg-surface-container-high">v1.0</span></div><nav class="hidden md:flex items-center gap-space-lg" data-active-classes="text-on-surface font-medium"><a aria-current="page" class="transition-colors text-on-surface font-medium" data-path="home" href="#">Home</a><a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#">Dashboard</a><a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" data-path="leads" href="#">Leads</a><a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" data-path="voice-simulator" href="#">Voice Simulator</a><a class="text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md" data-path="settings" href="#">Settings</a></nav><div class="flex items-center gap-space-md"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-background"><div class="max-w-7xl mx-auto px-space-lg py-space-xl"><div class="flex flex-col w-full">
+<!-- Top Meta / Eyebrow Header -->
+<section class="flex flex-col items-start gap-space-lg mb-space-xl">
+<div class="inline-flex items-center gap-space-sm px-space-md py-1 rounded-full bg-surface-container-high text-on-surface shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-sm text-label-sm tracking-widest uppercase text-on-surface-variant font-medium">Autonomous Voice Agent v1.0 • Sub-500ms Latency</span>
+</div>
+<div class="flex flex-col max-w-4xl gap-space-sm">
+<h1 class="font-display text-display text-on-surface tracking-tight">
+        Inbound &amp; outbound voice, handled entirely by AI.
+      </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
+        Qualify leads, book meetings, and update your CRM with sub-second latency. No rigid scripts. No robotic delays. Deterministic real-time conversational execution.
+      </p>
+</div>
+<!-- Primary Console Trigger & Navigation Actions -->
+<div class="flex flex-wrap items-center gap-space-md pt-space-xs">
+<button class="flex items-center gap-space-sm px-space-lg py-2.5 rounded bg-on-surface text-surface-container-lowest font-label-md text-label-md hover:bg-surface-tint transition-all shadow-md active:scale-[0.99]" id="triggerCallBtn">
+<span class="material-symbols-outlined text-[18px]">phone_in_talk</span>
+<span>Start Interactive Call</span>
+</button>
+<a class="inline-flex items-center gap-space-xs px-space-md py-2.5 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors group" href="#">
+<span>View API Documentation</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+<!-- Calling Mode Segmented Switcher -->
+<div class="flex items-center p-0.5 rounded bg-surface-container-lowest shadow-sm ml-auto">
+<button class="px-space-md py-1 rounded text-label-sm font-label-sm bg-surface-container-high text-on-surface transition-all" id="modeSimulated">
+          Simulated Demo
+        </button>
+<button class="px-space-md py-1 rounded text-label-sm font-label-sm text-on-surface-variant hover:text-on-surface transition-all" id="modeLive">
+          Live Vapi Telephony
+        </button>
+</div>
+</div>
+</section>
+<!-- Interactive Acoustic Waveform Console & Telephony Engine -->
+<section class="w-full mb-space-xl">
+<div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl relative overflow-hidden">
+<!-- Glow ambient anchor -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-surface-container-highest/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-lg relative z-10">
+<!-- Status & Telemetry Indicators -->
+<div class="flex flex-col gap-space-sm min-w-[280px]">
+<div class="flex items-center gap-space-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-primary animate-ping" id="callStatusPip"></span>
+<span class="font-label-md text-label-md text-on-surface font-semibold uppercase tracking-wider" id="callStatusText">Neural Engine Standby</span>
+</div>
+<div class="flex items-center gap-space-md text-body-sm font-body-sm text-outline">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span>Budget: &lt;500ms</span>
+</span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+<span>Turn-taking: Adaptive</span>
+</span>
+<span>•</span>
+<span class="text-on-surface-variant" id="sessionCounter">00:00</span>
+</div>
+</div>
+<!-- Real-time SVG Audio Spectrum Visualizer -->
+<div class="flex-1 flex items-center justify-center py-space-sm px-space-md bg-surface-container-lowest/80 rounded-lg backdrop-blur-md">
+<svg class="w-full h-16 text-primary" fill="none" id="waveformSvg" preserveaspectratio="none" viewbox="0 0 600 64">
+<g id="barsGroup">
+<!-- Dynamically populated or default silent state -->
+<rect fill="currentColor" height="8" opacity="0.35" rx="2" width="4" x="10" y="28"></rect>
+<rect fill="currentColor" height="12" opacity="0.45" rx="2" width="4" x="25" y="26"></rect>
+<rect fill="currentColor" height="4" opacity="0.25" rx="2" width="4" x="40" y="30"></rect>
+<rect fill="currentColor" height="16" opacity="0.6" rx="2" width="4" x="55" y="24"></rect>
+<rect fill="currentColor" height="6" opacity="0.3" rx="2" width="4" x="70" y="29"></rect>
+<rect fill="currentColor" height="24" opacity="0.75" rx="2" width="4" x="85" y="20"></rect>
+<rect fill="currentColor" height="10" opacity="0.4" rx="2" width="4" x="100" y="27"></rect>
+<rect fill="currentColor" height="32" opacity="0.9" rx="2" width="4" x="115" y="16"></rect>
+<rect fill="currentColor" height="14" opacity="0.5" rx="2" width="4" x="130" y="25"></rect>
+<rect fill="currentColor" height="40" opacity="1.0" rx="2" width="4" x="145" y="12"></rect>
+<rect fill="currentColor" height="20" opacity="0.6" rx="2" width="4" x="160" y="22"></rect>
+<rect fill="currentColor" height="28" opacity="0.8" rx="2" width="4" x="175" y="18"></rect>
+<rect fill="currentColor" height="12" opacity="0.4" rx="2" width="4" x="190" y="26"></rect>
+<rect fill="currentColor" height="36" opacity="0.95" rx="2" width="4" x="205" y="14"></rect>
+<rect fill="currentColor" height="14" opacity="0.5" rx="2" width="4" x="220" y="25"></rect>
+<rect fill="currentColor" height="24" opacity="0.7" rx="2" width="4" x="235" y="20"></rect>
+<rect fill="currentColor" height="8" opacity="0.3" rx="2" width="4" x="250" y="28"></rect>
+<rect fill="currentColor" height="30" opacity="0.85" rx="2" width="4" x="265" y="17"></rect>
+<rect fill="currentColor" height="12" opacity="0.4" rx="2" width="4" x="280" y="26"></rect>
+<rect fill="currentColor" height="20" opacity="0.65" rx="2" width="4" x="295" y="22"></rect>
+<rect fill="currentColor" height="34" opacity="0.9" rx="2" width="4" x="310" y="15"></rect>
+<rect fill="currentColor" height="10" opacity="0.35" rx="2" width="4" x="325" y="27"></rect>
+<rect fill="currentColor" height="26" opacity="0.75" rx="2" width="4" x="340" y="19"></rect>
+<rect fill="currentColor" height="14" opacity="0.5" rx="2" width="4" x="355" y="25"></rect>
+<rect fill="currentColor" height="36" opacity="0.95" rx="2" width="4" x="370" y="14"></rect>
+<rect fill="currentColor" height="20" opacity="0.6" rx="2" width="4" x="385" y="22"></rect>
+<rect fill="currentColor" height="6" opacity="0.3" rx="2" width="4" x="400" y="29"></rect>
+<rect fill="currentColor" height="28" opacity="0.8" rx="2" width="4" x="415" y="18"></rect>
+<rect fill="currentColor" height="16" opacity="0.5" rx="2" width="4" x="430" y="24"></rect>
+<rect fill="currentColor" height="24" opacity="0.7" rx="2" width="4" x="445" y="20"></rect>
+<rect fill="currentColor" height="10" opacity="0.4" rx="2" width="4" x="460" y="27"></rect>
+<rect fill="currentColor" height="32" opacity="0.85" rx="2" width="4" x="475" y="16"></rect>
+<rect fill="currentColor" height="12" opacity="0.45" rx="2" width="4" x="490" y="26"></rect>
+<rect fill="currentColor" height="20" opacity="0.6" rx="2" width="4" x="505" y="22"></rect>
+<rect fill="currentColor" height="6" opacity="0.3" rx="2" width="4" x="520" y="29"></rect>
+<rect fill="currentColor" height="14" opacity="0.5" rx="2" width="4" x="535" y="25"></rect>
+<rect fill="currentColor" height="26" opacity="0.75" rx="2" width="4" x="550" y="19"></rect>
+<rect fill="currentColor" height="10" opacity="0.35" rx="2" width="4" x="565" y="27"></rect>
+<rect fill="currentColor" height="8" opacity="0.3" rx="2" width="4" x="580" y="28"></rect>
+</g>
+</svg>
+</div>
+<!-- Dynamic Action controls inside panel -->
+<div class="flex items-center gap-space-sm justify-end">
+<button class="hidden px-space-md py-2 rounded bg-error-container text-on-error-container font-label-md text-label-md transition-colors shadow-sm" id="endCallBtn">
+            Disconnect
+          </button>
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Codec / Protocol</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Opus 48kHz</span>
+</div>
+</div>
+</div>
+<!-- Real-time transcription ticker container -->
+<div class="mt-space-md pt-space-md bg-surface-container-lowest/40 rounded p-space-md flex items-start gap-space-md" id="transcriptBox">
+<span class="material-symbols-outlined text-outline text-[18px] mt-0.5">forum</span>
+<div class="flex flex-col flex-1">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline">Real-Time Transcription Stream</span>
+<p class="text-body-md font-body-md text-on-surface-variant italic mt-1" id="liveTranscript">
+            "Agent listening on WebSocket stream: ready to negotiate calendars and execute CRM object schemas."
+          </p>
+</div>
+<div class="hidden sm:flex items-center gap-space-xs text-label-sm font-label-sm text-outline">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Zero packet loss</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Key Impact Metrics Strip (3 Crisp Columns) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-space-lg mb-space-xl">
+<div class="flex flex-col bg-surface-container-low p-space-lg rounded-xl shadow-sm hover:bg-surface-container transition-colors">
+<div class="flex items-baseline justify-between mb-space-xs">
+<span class="font-display text-display text-on-surface tracking-tighter">0.4s</span>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline">P95 Benchmark</span>
+</div>
+<span class="font-title-md text-title-md text-on-surface font-medium">Response Latency</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+        Direct full-duplex WebSocket pipe eliminating natural pauses, interruption lag, and awkward silence.
+      </p>
+</div>
+<div class="flex flex-col bg-surface-container-low p-space-lg rounded-xl shadow-sm hover:bg-surface-container transition-colors">
+<div class="flex items-baseline justify-between mb-space-xs">
+<span class="font-display text-display text-on-surface tracking-tighter">99.2%</span>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline">Schema Verified</span>
+</div>
+<span class="font-title-md text-title-md text-on-surface font-medium">Intent Accuracy</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+        Deterministic field extraction preventing hallucinations during calendar booking and prospect qualification.
+      </p>
+</div>
+<div class="flex flex-col bg-surface-container-low p-space-lg rounded-xl shadow-sm hover:bg-surface-container transition-colors">
+<div class="flex items-baseline justify-between mb-space-xs">
+<span class="font-display text-display text-on-surface tracking-tighter">100%</span>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline">Zero Loss</span>
+</div>
+<span class="font-title-md text-title-md text-on-surface font-medium">CRM Sync Rate</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+        Instantaneous mutations pushed via bi-directional webhooks to HubSpot, Salesforce, and custom SQL databases.
+      </p>
+</div>
+</section>
+<!-- Editorial Visual Interlude / Audio Intelligence Graphic -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg mb-space-xl items-center">
+<div class="lg:col-span-7 flex flex-col gap-space-md">
+<div class="inline-flex items-center gap-2">
+<span class="text-label-sm font-label-sm tracking-widest uppercase text-outline">Acoustic Architecture</span>
+<div class="h-px w-12 bg-surface-container-highest"></div>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+        Engineered for rapid interruption, continuous context, and zero robotic hesitation.
+      </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+        Legacy voice IVRs force linear speech turns. CallerOS uses conversational token streaming to detect user interruptions in under 120ms, cleanly cutting voice output and shifting context branches instantaneously.
+      </p>
+<div class="grid grid-cols-2 gap-space-md pt-space-sm">
+<div class="p-space-md bg-surface-container-lowest rounded-lg">
+<span class="font-title-md text-title-md text-on-surface block mb-1">True Barge-In</span>
+<span class="font-body-sm text-body-sm text-outline">Speakers can interrupt freely without conversational collision or repetition loops.</span>
+</div>
+<div class="p-space-md bg-surface-container-lowest rounded-lg">
+<span class="font-title-md text-title-md text-on-surface block mb-1">State Preservation</span>
+<span class="font-body-sm text-body-sm text-outline">Mid-call topic shifts retain past constraints, variables, and qualification criteria.</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-5 relative">
+<div class="w-full h-80 rounded-xl overflow-hidden bg-surface-container-low shadow-xl relative group">
+<img class="w-full h-full object-cover opacity-75 group-hover:scale-105 transition-transform duration-700" data-alt="Minimalist high-tech sound engineering laboratory with clean brushed steel audio consoles, obsidian glass surfaces, subtle illuminated frequency displays, sleek architectural design, moody dark aesthetic, cinematic rim lighting in deep charcoal and silver monochrome." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrSqRBiTCWf-hI48lymLfHu1nCy0o-NweJBnNz41-sKoANC8vVApKCNm4j0iwOh7KyBFk07UJ5mq5TVGCiV4TfUJau1S--ttEZLhtUVazbEs27nmn_NageI_5DbDIM6RXeevQfT9-6aqoY1u4eJf8NUoi9-vSknjDEAmzOrpQN-w4dy9qri-62PDNrHqLork0royfewg7g3r4j3NY6cT9jX_CbBvt6VQ-ijPnPsto"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent"></div>
+<div class="absolute bottom-space-md left-space-md right-space-md p-space-md bg-surface-container-lowest/80 backdrop-blur-md rounded-lg flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Acoustic Model</span>
+<span class="font-title-md text-title-md text-on-surface font-semibold">CallerOS Dynamic-v4</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[24px]">graphic_eq</span>
+</div>
+</div>
+</div>
+</section>
+<!-- How Autonomous Calling Executes (Protocol Section) -->
+<section class="flex flex-col mb-space-xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-space-lg gap-space-md">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-outline">The Calling Protocol</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">Autonomous execution cycle</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+        From cold inbound trigger to verified calendar booking, fully governed by typed strict schemas.
+      </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- Step 01 -->
+<div class="flex flex-col bg-surface-container-low rounded-xl p-space-lg relative overflow-hidden shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-space-lg">
+<span class="font-display text-headline-lg text-outline/40 font-bold">01</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[16px]">sensors</span>
+</div>
+</div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline mb-1">Step 01 • Ingestion</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-medium mb-space-sm">Connect &amp; Signal</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Inbound webhook triggers, form fills, or missed-call events initiate sub-second SIP handshakes via Vapi or Twilio backbone.
+        </p>
+<div class="mt-space-lg pt-space-md bg-surface-container-lowest/50 rounded p-space-sm">
+<div class="flex items-center justify-between text-body-sm font-body-sm text-outline">
+<span>Handshake latency</span>
+<span class="text-on-surface font-mono">~112ms</span>
+</div>
+</div>
+</div>
+<!-- Step 02 -->
+<div class="flex flex-col bg-surface-container-low rounded-xl p-space-lg relative overflow-hidden shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-space-lg">
+<span class="font-display text-headline-lg text-outline/40 font-bold">02</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[16px]">record_voice_over</span>
+</div>
+</div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline mb-1">Step 02 • Dialogue</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-medium mb-space-sm">Converse &amp; Negotiate</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Dynamic multi-turn prompts extract budget, timeline, and technical constraints while naturally scheduling around calendar conflicts.
+        </p>
+<div class="mt-space-lg pt-space-md bg-surface-container-lowest/50 rounded p-space-sm">
+<div class="flex items-center justify-between text-body-sm font-body-sm text-outline">
+<span>Interruption window</span>
+<span class="text-on-surface font-mono">&lt; 140ms</span>
+</div>
+</div>
+</div>
+<!-- Step 03 -->
+<div class="flex flex-col bg-surface-container-low rounded-xl p-space-lg relative overflow-hidden shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between mb-space-lg">
+<span class="font-display text-headline-lg text-outline/40 font-bold">03</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[16px]">task_alt</span>
+</div>
+</div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline mb-1">Step 03 • Mutation</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-medium mb-space-sm">Close &amp; Synchronize</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Call structured summary, audio recording, lead qualification tag, and calendar dispatch are atomized directly into your CRM.
+        </p>
+<div class="mt-space-lg pt-space-md bg-surface-container-lowest/50 rounded p-space-sm">
+<div class="flex items-center justify-between text-body-sm font-body-sm text-outline">
+<span>JSON Payload lock</span>
+<span class="text-on-surface font-mono">Strict Strict</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Technical Infrastructure & System Schematics Strip -->
+<section class="bg-surface-container-low rounded-xl p-space-lg mb-space-xl shadow-lg">
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between pb-space-md mb-space-lg gap-space-sm">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-outline">Architectural Integrity</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-medium">Enterprise Stack Integration</h3>
+</div>
+<div class="flex items-center gap-space-xs text-body-sm font-body-sm text-outline">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>SOC2 Compliant Architecture</span>
+</div>
+</div>
+<!-- Tech Stack Pill Strip -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-space-md">
+<div class="p-space-md rounded bg-surface-container-lowest flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline text-[20px]">layers</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Next.js 14</span>
+<span class="font-body-sm text-body-sm text-outline">Edge Runtime</span>
+</div>
+</div>
+<div class="p-space-md rounded bg-surface-container-lowest flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline text-[20px]">bolt</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">FastAPI</span>
+<span class="font-body-sm text-body-sm text-outline">Async Telephony IO</span>
+</div>
+</div>
+<div class="p-space-md rounded bg-surface-container-lowest flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline text-[20px]">database</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Supabase PG</span>
+<span class="font-body-sm text-body-sm text-outline">pgvector &amp; Row Auth</span>
+</div>
+</div>
+<div class="p-space-md rounded bg-surface-container-lowest flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline text-[20px]">call</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Vapi Voice</span>
+<span class="font-body-sm text-body-sm text-outline">Direct SIP Trunking</span>
+</div>
+</div>
+<div class="p-space-md rounded bg-surface-container-lowest flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline text-[20px]">code</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Schema Lock</span>
+<span class="font-body-sm text-body-sm text-outline">Deterministic Output</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Editorial Call to Action Banner -->
+<section class="rounded-xl bg-surface-container-lowest p-space-xl flex flex-col md:flex-row items-center justify-between gap-space-lg shadow-2xl relative overflow-hidden">
+<div class="flex flex-col max-w-xl gap-space-xs z-10">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">Sub-second Realtime Engine</span>
+<h3 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Deploy your company's voice agent in 15 minutes.</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Connect to your PBX or assign an autonomous toll-free number. Pre-built templates for B2B SaaS, Logistics, and High-Volume Healthcare.
+      </p>
+</div>
+<div class="flex flex-col sm:flex-row items-center gap-space-md z-10">
+<button class="w-full sm:w-auto px-space-lg py-2.5 rounded bg-on-surface text-surface-container-lowest font-label-md text-label-md hover:bg-surface-tint transition-all shadow-md">
+        Deploy New Agent
+      </button>
+<button class="w-full sm:w-auto px-space-md py-2.5 rounded text-on-surface hover:bg-surface-container-high font-label-md text-label-md transition-colors">
+        Speak With Solutions
+      </button>
+</div>
+<!-- Background aesthetic geometric ambient ring -->
+<div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-surface-container-high/20 pointer-events-none blur-2xl"></div>
+</section>
+</div>
+<!-- Interactive Simulated Telephony Engine Script -->
+<script>
+  (() => {
+    let isCalling = false;
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let animFrame = null;
+
+    const triggerCallBtn = document.getElementById('triggerCallBtn');
+    const endCallBtn = document.getElementById('endCallBtn');
+    const callStatusPip = document.getElementById('callStatusPip');
+    const callStatusText = document.getElementById('callStatusText');
+    const sessionCounter = document.getElementById('sessionCounter');
+    const liveTranscript = document.getElementById('liveTranscript');
+    const barsGroup = document.getElementById('barsGroup');
+    const modeSimulated = document.getElementById('modeSimulated');
+    const modeLive = document.getElementById('modeLive');
+
+    const simulatedDialogues = [
+      "CallerOS: 'Good morning. This is Alex from CloudScale. I saw your inquiry regarding real-time capacity management.'",
+      "Prospect: 'Hi Alex, yes! We run 40 Kubernetes nodes and need automated scaling triggers before next quarter.'",
+      "CallerOS: 'Understood. Is your deployment purely AWS EKS, or are you operating on a hybrid cloud topology?'",
+      "Prospect: 'Hybrid AWS and on-prem Bare Metal. What does migration typically take?'",
+      "CallerOS: 'Our agent provisions adapters in 48 hours. Let's reserve 20 minutes with our Principal Architect this Thursday at 2:00 PM EST. Does that align?'",
+      "Prospect: 'Thursday at 2 PM is perfect. Please send the calendar invite.'",
+      "CallerOS: 'Calendar dispatched. CRM synced with qualifying tier: Enterprise A. Have a great day!'"
+    ];
+
+    let dialogueIndex = 0;
+    let dialogueTimer = null;
+
+    function startCall() {
+      isCalling = true;
+      secondsElapsed = 0;
+      dialogueIndex = 0;
+
+      callStatusText.innerText = 'Call Active • Opus 48kHz Fullduplex';
+      callStatusText.classList.add('text-primary');
+      callStatusPip.classList.remove('bg-primary');
+      callStatusPip.classList.add('bg-primary');
+
+      endCallBtn.classList.remove('hidden');
+      triggerCallBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">mic</span><span>Active Stream...</span>';
+
+      timerInterval = setInterval(() => {
+        secondsElapsed++;
+        const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+        const secs = String(secondsElapsed % 60).padStart(2, '0');
+        sessionCounter.innerText = `${mins}:${secs}`;
+      }, 1000);
+
+      dialogueTimer = setInterval(() => {
+        if (dialogueIndex < simulatedDialogues.length) {
+          liveTranscript.innerText = simulatedDialogues[dialogueIndex];
+          dialogueIndex++;
+        } else {
+          dialogueIndex = 0;
+        }
+      }, 3400);
+
+      animateWaveform();
+    }
+
+    function endCall() {
+      isCalling = false;
+      clearInterval(timerInterval);
+      clearInterval(dialogueTimer);
+      cancelAnimationFrame(animFrame);
+
+      callStatusText.innerText = 'Neural Engine Standby';
+      callStatusText.classList.remove('text-primary');
+      callStatusPip.classList.add('bg-primary');
+
+      endCallBtn.classList.add('hidden');
+      triggerCallBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">phone_in_talk</span><span>Start Interactive Call</span>';
+      liveTranscript.innerText = '"Session disconnected. Structured summary & schema payloads safely persisted to Postgres."';
+
+      // Reset bars height
+      const bars = barsGroup.querySelectorAll('rect');
+      bars.forEach(bar => {
+        bar.setAttribute('height', '10');
+        bar.setAttribute('y', '27');
+      });
+    }
+
+    function animateWaveform() {
+      if (!isCalling) return;
+      const bars = barsGroup.querySelectorAll('rect');
+      bars.forEach(bar => {
+        const height = Math.floor(Math.random() * 48) + 6;
+        const y = 32 - (height / 2);
+        bar.setAttribute('height', height);
+        bar.setAttribute('y', y);
+      });
+      setTimeout(() => {
+        animFrame = requestAnimationFrame(animateWaveform);
+      }, 85);
+    }
+
+    triggerCallBtn.addEventListener('click', () => {
+      if (!isCalling) startCall();
+    });
+
+    endCallBtn.addEventListener('click', endCall);
+
+    modeSimulated.addEventListener('click', () => {
+      modeSimulated.classList.add('bg-surface-container-high', 'text-on-surface');
+      modeSimulated.classList.remove('text-on-surface-variant');
+      modeLive.classList.remove('bg-surface-container-high', 'text-on-surface');
+      modeLive.classList.add('text-on-surface-variant');
+    });
+
+    modeLive.addEventListener('click', () => {
+      modeLive.classList.add('bg-surface-container-high', 'text-on-surface');
+      modeLive.classList.remove('text-on-surface-variant');
+      modeSimulated.classList.remove('bg-surface-container-high', 'text-on-surface');
+      modeSimulated.classList.add('text-on-surface-variant');
+    });
+  })();
+</script></div></main><footer class="w-full bg-surface-container-lowest py-space-xl mt-space-xl"><div class="max-w-7xl mx-auto px-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-sm"><div class="w-1.5 h-1.5 rounded-full bg-primary"></div><span class="font-label-md text-label-md text-on-surface font-medium">CallerOS AI Core</span><span class="font-body-sm text-body-sm text-on-surface-variant">— Deterministic Agent Orchestration</span></div><div class="font-body-sm text-body-sm text-outline">© 2025 CallerOS Inc. Architecture refined for sub-100ms conversational loops.</div></div></footer></body></html>

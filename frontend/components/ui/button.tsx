@@ -1,35 +1,20 @@
-import { cn } from "@/lib/utils"
+import * as React from "react";
 
-export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
-  variant?: "default" | "primary" | "secondary" | "destructive"
-  size?: "default" | "sm" | "lg" | "icon"
-  className?: string
-}
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "default" | "secondary" | "danger" | "ghost";
+};
 
-export function Button({ variant = "default", size = "default", className, ...props }: ButtonProps) {
-  const variants = {
-    default: "bg-primary text-primary-foreground hover:bg-primary/90",
-    primary: "bg-primary text-primary-foreground hover:bg-primary/90",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-    destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-  }
-
-  const sizes = {
-    default: "h-10 px-4 py-2 text",
-    sm: "h-9 px-3 py-1 text-sm",
-    lg: "h-11 px-8 py-3 text",
-    icon: "h-10 w-10",
-  }
-
+export function Button({ className, variant = "default", ...props }: ButtonProps) {
+  const variants: Record<string, string> = {
+    default: "bg-[#fafafa] text-[#09090b] hover:bg-white/90",
+    secondary: "bg-[#121215] text-[#ffffff] border border-[#27272a] hover:border-[#3f3f46]",
+    danger: "bg-[#93000a] text-[#ffdad6] hover:bg-[#b0000c]",
+    ghost: "bg-transparent text-[#a1a1aa] hover:text-white",
+  };
   return (
     <button
-      className={cn(
-        "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
-        variants[variant],
-        sizes[size],
-        className,
-      )}
+      className={`inline-flex h-10 items-center justify-center rounded px-4 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className || ""}`}
       {...props}
     />
-  )
+  );
 }

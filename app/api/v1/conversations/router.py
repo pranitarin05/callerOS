@@ -1,246 +1,178 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timedelta
+from typing import List
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Optional, List
 
-from ...db.session import get_db
-from ...models import Lead
-from ...schemas.qualification import QualificationOutput, ConversationTurn, ConversationSummary
-from ...tools import ConversationSimulator, get_lead_details, update_lead, search_company_knowledge, schedule_followup, end_call
-from ...services.lead_service import LeadService
+from app.api.deps import get_current_user_id
+from app.core.ai import generate_qualification
+from app.db.session import get_db
+from app.models import Call
+from app.schemas.qualification import QualificationOutput
+from app.services.lead_service import LeadService
+from app.tools import (
+    ConversationSimulator,
+    end_call,
+    get_lead_details,
+    schedule_followup,
+    search_company_knowledge,
+    update_lead,
+)
+from app.tools.transcripts import process_call_completion
+
+router = APIRouter(tags=["conversations"])
 
 
-router = APIRouter(prefix="/v1/conversations", tags=["conversations"])
-
-
-@router.post("/simulate", response_model=dict)
-async def simulate_conversation(
-    lead_id: str,
-    lead_name: str,
+@router.post("/simulate")
+async def simulate(
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Run AI conversation simulator in demo mode.
-    
-    Works without paid telephony credentials. Demonstrates the complete workflow
-    including AI responses, tool execution, CRM updates and summary generation.
-    
-    Args:
-        lead_id: The lead's UUID string
-        lead_name: Name of the prospect for personalization
-        db: Database session
-        
-    Returns:
-        Complete conversation with turns and qualification data
-    """
-    # Verify lead exists and user has access
+    lead_id = str(payload.get("lead_id") or "")
+    lead_name = str(payload.get("lead_name") or "Prospect")
     lead = LeadService.get_lead_details(lead_id, db)
-    if not lead:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lead not found",
-        )
-    
-    # Run demo conversation
-    result = ConversationSimulator.run_demo_conversation(lead_name=lead_name)
-    
-    # Update lead status based on qualification
-    qualification = result["qualification"]
-    updates = {
-        "interest_level": qualification["interest"],
-        "requirements": qualification["requirements"],
-        "sentiment": qualification["sentiment"],
-        "call_outcome": qualification["call_outcome"],
-        "next_action": qualification["next_action"],
-    }
-    
-    updated_lead = update_lead(lead_id, updates, lead.owner_id, db)
-    
-    if not updated_lead:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update lead",
-        )
-    
-    # Add lead ID to the summary
-    result["summary"] = result["summary"].replace("Lead " + lead_name, f"Lead {lead_name} (ID: {lead_id})")
-    
+    if not lead or str(lead.owner_id) != str(user_id):
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    conversation = ConversationSimulator.run_demo_conversation(lead_name=lead_name)
+    call = Call(
+        id=str(uuid4()),
+        lead_id=lead_id,
+        direction="outbound",
+        status="initiated",
+        phone_number=lead.phone,
+        started_at=datetime.utcnow(),
+    )
+    db.add(call)
+    db.commit()
+
+    processed = process_call_completion(call.id, conversation["transcript"], db)
+    end_call(call.id, "interested", db)
+    updated_lead = get_lead_details(lead_id, user_id, db)
+
     return {
         "mode": "demo",
         "lead_id": lead_id,
-        "conversation": result,
-        "updated_lead": {
-            "id": updated_lead.id,
-            "status": updated_lead.status,
-            "interest_level": updated_lead.interest_level,
-            "call_outcome": updated_lead.call_outcome,
-            "next_action": updated_lead.next_action,
-        }
+        "conversation": conversation,
+        "processed": processed,
+        "updated_lead": updated_lead,
     }
 
 
 @router.post("/qualify", response_model=QualificationOutput)
-async def qualify_lead(
-    lead_id: str,
-    conversation_history: List[dict],
+async def qualify(
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """AI lead qualification from conversation history.
-    
-    Extracts structured qualification data from a conversation.
-    Uses backend tools for CRM updates - LLM never directly executes SQL.
-    
-    Args:
-        lead_id: The lead's UUID string
-        conversation_history: List of conversation turn dictionaries
-        db: Database session
-        
-    Returns:
-        Structured qualification output
-    """
-    # Verify lead ownership
+    lead_id = str(payload.get("lead_id") or "")
+    turns = payload.get("conversation_history") or payload.get("turns") or []
     lead = LeadService.get_lead_details(lead_id, db)
-    if not lead:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lead not found",
-        )
-    
-    # In a real implementation, would use OpenAI API with structured outputs
-    # For demo mode, generate realistic qualification based on conversation
-    
-    # Simple heuristic-based qualification for demo
-    positive_keywords = ["interested", "demo", "automate", "soon", "help", "solution"]
-    negative_keywords = ["not interested", "expensive", "not needed", "already have system"]
-    
-    conversation_text = " ".join([turn.get("text", "").lower() for turn in conversation_history])
-    
-    # Determine interest level
-    if any(kw in conversation_text for kw in positive_keywords):
-        interest = "high"
-    elif any(kw in conversation_text for kw in negative_keywords):
-        interest = "low"
+    if not lead or str(lead.owner_id) != str(user_id):
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    texts = []
+    for turn in turns:
+        if isinstance(turn, dict):
+            texts.append(str(turn.get("text") or ""))
+        else:
+            texts.append(str(turn))
+    text = " ".join(texts).lower()
+
+    positive = sum(word in text for word in ["interested", "demo", "soon", "great", "automate"])
+    negative = sum(word in text for word in ["not interested", "no", "expensive", "stop"])
+
+    fallback_sentiment = "positive" if positive > negative else "negative" if negative > positive else "neutral"
+    if "not interested" in text:
+        fallback_outcome, fallback_status, fallback_next = "not_interested", "not_interested", "Send follow-up email"
+    elif "demo" in text or "interested" in text:
+        fallback_outcome, fallback_status, fallback_next = "interested", "qualified", "Schedule product demo"
     else:
-        interest = "medium"
-    
-    # Determine sentiment
-    positive_count = sum(1 for kw in positive_keywords if kw in conversation_text)
-    negative_count = sum(1 for kw in negative_keywords if kw in conversation_text)
-    
-    if positive_count > negative_count:
-        sentiment = "positive"
-    elif negative_count > positive_count:
-        sentiment = "negative"
-    else:
-        sentiment = "neutral"
-    
-    # Determine call outcome
-    if "demo" in conversation_text or "interested" in conversation_text:
-        call_outcome = "interested"
-        lead_status = "qualified"
-        next_action = "Schedule product demo"
-    elif "not interested" in conversation_text:
-        call_outcome = "not_interested"
-        lead_status = "not_interested"
-        next_action = "Send follow-up email"
-    else:
-        call_outcome = "callback"
-        lead_status = "interested"
-        next_action = "Call back later"
-    
-    # Extract requirements (simplified - would use NER in production)
-    requirements = "Automate customer follow-ups"  # Default
-    if "customer service" in conversation_text:
-        requirements = "Improve customer service response times"
-    elif "sales follow-up" in conversation_text:
-        requirements = "Automate sales follow-ups"
-    
-    # Update lead in CRM using backend tool
-    update_data = {
-        "interest_level": interest,
-        "requirements": requirements,
-        "sentiment": sentiment,
-        "call_outcome": call_outcome,
-        "next_action": next_action,
-    }
-    
-    updated_lead = update_lead(lead_id, update_data, lead.owner_id, db)
-    
-    if not updated_lead:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update lead in CRM",
-        )
-    
+        fallback_outcome, fallback_status, fallback_next = "callback", "interested", "Call back later"
+
+    fallback_interest = "high" if fallback_outcome == "interested" else "low" if fallback_outcome == "not_interested" else "medium"
+    fallback_requirements = "Improve customer service response times" if "customer service" in text else "Automate customer follow-ups"
+
+    result = await generate_qualification(
+        "\n".join(texts),
+        {
+            "lead_status": fallback_status,
+            "interest": fallback_interest,
+            "requirements": fallback_requirements,
+            "sentiment": fallback_sentiment,
+            "call_outcome": fallback_outcome,
+            "next_action": fallback_next,
+        },
+    )
+
+    status = str(result["lead_status"])
+    interest = str(result["interest"])
+    requirements = str(result["requirements"])
+    sentiment = str(result["sentiment"])
+    outcome = str(result["call_outcome"])
+    next_action = str(result["next_action"])
+
+    updated = update_lead(
+        lead_id,
+        {
+            "status": status,
+            "interest_level": interest,
+            "requirements": requirements,
+            "sentiment": sentiment,
+            "call_outcome": outcome,
+            "next_action": next_action,
+        },
+        user_id,
+        db,
+    )
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update lead")
+
     return QualificationOutput(
-        lead_status=lead_status,
+        lead_status=status,
         interest=interest,
         requirements=requirements,
         sentiment=sentiment,
-        call_outcome=call_outcome,
+        call_outcome=outcome,
         next_action=next_action,
     )
 
 
-@router.post("/knowledge-search", response_model=List[dict])
-async def search_knowledge(
-    query: str,
-    lead_id: str,
+@router.post("/knowledge-search")
+async def knowledge_search(
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Search company knowledge base for relevant information.
-    
-    Validates lead ownership before allowing knowledge search.
-    """
-    # Verify lead exists and user has access
-    lead = LeadService.get_lead_details(lead_id, db)
-    if not lead:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lead not found",
-        )
-    
-    results = search_company_knowledge(query, lead.owner_id, db)
-    return results
+    query = str(payload.get("query") or "")
+    return search_company_knowledge(query, user_id, db)
 
 
-@router.post("/followup", response_model=dict)
+@router.post("/followup")
 async def create_followup(
-    lead_id: str,
-    scheduled_at: str,
-    user_id: str,
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Schedule a follow-up call/task for a lead.
-    
-    Uses backend tool for idempotent follow-up creation.
-    """
+    lead_id = str(payload.get("lead_id") or "")
+    scheduled_at = str(payload.get("scheduled_at") or "")
     result = schedule_followup(lead_id, scheduled_at, user_id, db)
-    
     if not result:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to schedule follow-up. Check lead ownership and timestamp.",
-        )
-    
+        raise HTTPException(status_code=400, detail="Invalid lead, owner, or scheduled_at")
     return result
 
 
-@router.post("/end-call", response_model=dict)
+@router.post("/end-call")
 async def complete_call(
-    call_id: str,
-    outcome: str,
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """End a call and update CRM records.
-    
-    Makes webhook processing idempotent and updates lead status
-    based on call outcome.
-    """
+    call_id = str(payload.get("call_id") or "")
+    outcome = str(payload.get("outcome") or "")
     result = end_call(call_id, outcome, db)
-    
     if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Call not found",
-        )
-    
+        raise HTTPException(status_code=404, detail="Call not found")
     return result

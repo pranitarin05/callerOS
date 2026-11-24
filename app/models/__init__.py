@@ -3,16 +3,16 @@ from sqlalchemy import (
     Index, ForeignKey, func
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+from app.db.base import Base
 
 
 class Profile(Base):
     __tablename__ = "profiles"
 
     id = Column(String(36), primary_key=True, index=True, default=func.gen_random_uuid())
-    email = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
     avatar = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
@@ -25,6 +25,9 @@ class Profile(Base):
     )
 
     leads = relationship("Lead", back_populates="owner", cascade="all, delete-orphan")
+    followups = relationship("Followup", back_populates="user", cascade="all, delete-orphan")
+    agent_configs = relationship("AgentConfig", back_populates="owner", cascade="all, delete-orphan")
+    knowledge_documents = relationship("KnowledgeDocument", back_populates="owner", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("ix_profiles_email", "email", unique=True),
@@ -45,7 +48,7 @@ class Lead(Base):
     sentiment = Column(String, default="neutral", nullable=False)
     call_outcome = Column(String, nullable=True)
     next_action = Column(String, nullable=True)
-    source = Column(String, nullable=True)  # vapi, manual, etc.
+    source = Column(String, nullable=True)  # manual, elevenlabs_exotel, etc.
     notes = Column(Text, nullable=True)
     owner_id = Column(String(36), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -75,23 +78,23 @@ class Call(Base):
         ForeignKey("leads.id", ondelete="CASCADE"),
         nullable=False
     )
-    vapi_call_id = Column(String, unique=True, index=True, nullable=True)
+    provider = Column(String, default="elevenlabs_exotel", nullable=False)
+    conversation_id = Column(String(128), unique=True, nullable=True)
+    exotel_call_sid = Column(String(128), unique=True, nullable=True)
     direction = Column(String, default="outbound", nullable=False)
-    status = Column(String, default="scheduled", nullable=False)
+    status = Column(String, default="initiated", nullable=False)
+    initiation_status = Column(String, default="submitted", nullable=False)
+    call_outcome = Column(String, nullable=True)
+    qualification_json = Column(Text, nullable=True)
+    followup_required = Column(Boolean, default=False, nullable=False)
+    error_message = Column(Text, nullable=True)
     started_at = Column(DateTime(timezone=True), nullable=True)
     ended_at = Column(DateTime(timezone=True), nullable=True)
     duration_seconds = Column(Integer, nullable=True)
     phone_number = Column(String, nullable=True)
-    transcript_id = Column(
-        String(36),
-        ForeignKey("transcripts.id", ondelete="SET NULL"),
-        nullable=True
-    )
-    summary_id = Column(
-        String(36),
-        ForeignKey("call_summaries.id", ondelete="SET NULL"),
-        nullable=True
-    )
+    live_transcript = Column(Text, nullable=True)
+    transcript_id = Column(String(36), nullable=True)
+    summary_id = Column(String(36), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True),
@@ -103,8 +106,9 @@ class Call(Base):
 
     __table_args__ = (
         Index("ix_calls_lead_id", "lead_id"),
-        Index("ix_calls_vapi_call_id", "vapi_call_id"),
         Index("ix_calls_status", "status"),
+        Index("ix_calls_conversation_id", "conversation_id"),
+        Index("ix_calls_exotel_call_sid", "exotel_call_sid"),
     )
 
 
@@ -119,6 +123,7 @@ class Transcript(Base):
     )
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (
         Index("ix_transcripts_call_id", "call_id"),
@@ -141,6 +146,7 @@ class CallSummary(Base):
     interest = Column(String, default="low", nullable=False)
     next_action = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (
         Index("ix_call_summaries_call_id", "call_id"),

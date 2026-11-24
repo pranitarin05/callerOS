@@ -1,273 +1,185 @@
-# AI CallerOS - Deployment Guide
+# AI CallerOS - Deployment & Calling Guide
 
-## Overview
-AI CallerOS is a full-stack AI Voice Agent + CRM SaaS application built with:
-- **Frontend**: Next.js 16, TypeScript, Tailwind CSS, shadcn/ui, Recharts
-- **Backend**: Python FastAPI, SQLAlchemy, Pydantic, Alembic
-- **Database**: Supabase PostgreSQL
-- **Authentication**: Supabase Auth (Google OAuth + email magic link)
-- **AI**: Groq API for LLM, structured outputs for qualification
-- **Voice**: Vapi integration for outbound calling
+## 1. Overview
 
-## Prerequisites
+Outbound calls are placed exclusively through the official ElevenLabs endpoint:
 
-### 1. Environment Variables
-Create a `.env` file in the root directory with the following variables:
+```
+POST https://api.elevenlabs.io/v1/convai/exotel/outbound-call
+xi-api-key: <ELEVENLABS_API_KEY>
+```
+
+Request fields used by the backend:
+
+```json
+{
+  "agent_id": "<ELEVENLABS_AGENT_ID>",
+  "agent_phone_number_id": "<ELEVENLABS_PHONE_NUMBER_ID>",
+  "to_number": "+919876543210",
+  "conversation_initiation_client_data": {
+    "user_id": "<authenticated user id>",
+    "source_info": { "source": "exotel" },
+    "dynamic_variables": {
+      "call_id": "<local call id>",
+      "lead_id": "<local lead id>",
+      "crm_user_id": "<authenticated user id>",
+      "prospect_name": "<lead name>"
+    }
+  }
+}
+```
+
+Exotel credentials are stored inside the imported phone number in ElevenLabs. The backend does not call Exotel directly and does not send Exotel credentials to the browser.
+
+## 2. Environment variables
+
+Keep these in `D:/voice automate/.env` (backend only):
 
 ```env
-# Groq AI API
-GROQ_API_KEY=gsk_placeholder_groq_key_for_development_only
+# Calling mode: demo or live
+CALL_MODE=demo
 
-# Supabase Configuration
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# ElevenLabs
+ELEVENLABS_API_KEY=
+ELEVENLABS_AGENT_ID=
+ELEVENLABS_PHONE_NUMBER_ID=
+ELEVENLABS_AGENT_NAME=Student Project Demo Qualifier
+ELEVENLABS_WEBHOOK_URL=
+ELEVENLABS_WEBHOOK_SECRET=
+ELEVENLABS_API_BASE_URL=https://api.elevenlabs.io
 
-# Vapi Configuration (for live mode)
-VAPI_ASSISTANT_ID=your_vapi_assistant_id
-VAPI_PUBLIC_KEY=your_vapi_public_key
-VAPI_SECRET_KEY=your_vapi_secret_key  # Keep this secret!
+# Exotel credentials used when importing the number into ElevenLabs
+EXOTEL_ACCOUNT_SID=
+EXOTEL_API_KEY=
+EXOTEL_API_TOKEN=
+EXOTEL_PHONE_NUMBER=
+EXOTEL_REGION=api.in.exotel.com
 
-# Application Settings
-SECRET_KEY=calleros-super-secret-key-change-in-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+# Groq analysis with backup keys
+GROQ_API_KEY=
+GROQ_API_KEY_BACKUP_1=
+GROQ_API_KEY_BACKUP_2=
+GROQ_MODEL=llama-3.3-70b-versatile
 
-# Backend Configuration
-API_V1_STR=/api/v1
-PROJECT_NAME=AI CallerOS
+# App
+SECRET_KEY=change-this-secret
 ```
 
-### 2. Database Setup - Supabase
+`.env` is gitignored. Never commit real values.
 
-1. Create a Supabase project at [supabase.com](https://supabase.com)
-2. Get your project URL and anon/service role keys
-3. Run the Alembic migrations to set up the 9 database tables:
-   ```bash
-   cd backend
-   alembic upgrade head
-   ```
-2. Enable Supabase Auth:
-   - Go to Supabase Dashboard > Authentication > Providers
-   - Enable Google OAuth
-   - Configure the redirect URL: `http://localhost:8000/auth/callback`
+## 3. ElevenLabs + Exotel setup
 
-### 3. Vapi Configuration (for live mode)
+1. In Exotel, enable the Voicebot applet and collect Account SID, API Key, API Token and the E.164 phone number.
+2. In ElevenLabs → Phone Numbers → Import number → From Exotel:
+   - Phone number in E.164 format, e.g. `+918048961234`
+   - Account SID, API Key, API Token
+   - Region: Mumbai (`api.in.exotel.com`) or Singapore (`api.exotel.com`)
+   - Voicebot Applet ID
+3. Copy the imported number's ID into `ELEVENLABS_PHONE_NUMBER_ID`.
+4. Use the published agent `Student Project Demo Qualifier`; copy its ID into `ELEVENLABS_AGENT_ID`.
+5. Do not change the agent prompt unless required; it already handles Hindi, English and Hinglish and lead grading.
 
-1. Create a Vapi account at [vapi.ai](https://vapi.ai)
-2. Create an assistant with your desired configuration
-3. Get your:
-   - Assistant ID
-   - Public Key (can be exposed to frontend)
-   - Secret Key (keep secret - backend only!)
-4. Set the VAPI_SECRET_KEY in your .env file
-5. The webhook URL will be: `https://your-domain.com/api/v1/vapi/webhook`
+## 4. Webhook configuration
 
-## Development Setup
-
-### 1. Backend
+1. In ElevenAgents settings → Post-call webhooks, create a webhook with:
+   - URL: `https://<your-public-host>/api/webhooks/elevenlabs`
+   - Auth type: HMAC
+   - Events: `transcript`, `call_initiation_failure`
+2. Copy the generated shared secret into `ELEVENLABS_WEBHOOK_SECRET`.
+3. For local testing, expose the backend with a tunnel:
 
 ```bash
-cd D:/voice\ automate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run migrations
-cd app
-alembic upgrade head
-
-# Start the server
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+ngrok http 8000
 ```
 
-The backend will be available at `http://127.0.0.1:8000`
+Then set:
 
-### 2. Frontend
+```env
+ELEVENLABS_WEBHOOK_URL=https://<tunnel-host>/api/webhooks/elevenlabs
+ELEVENLABS_WEBHOOK_SECRET=<secret-from-elevenlabs>
+```
+
+The backend verifies the `ElevenLabs-Signature` header using the official Python SDK. Without `ELEVENLABS_WEBHOOK_SECRET`, webhook delivery is rejected.
+
+Supported webhook types handled:
+
+- `post_call_transcription`: transcript, summary, metadata, analysis, qualification
+- `call_initiation_failure`: busy, no-answer, failure reasons
+- `post_call_audio`: acknowledged but not processed (no transcript data)
+
+## 5. Run locally
+
+Backend:
 
 ```bash
-cd D:/voice\ automate/frontend
+cd D:/voice automate
+py -3.11 -m pip install -r requirements.txt
+py -3.11 -m alembic upgrade head
+py -3.11 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-# Install dependencies
+Frontend:
+
+```bash
+cd D:/voice automate/frontend
 npm install
-
-# Run the development server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`
+Open `http://localhost:3000`.
 
-### 3. Full Stack (with Docker)
+## 6. Make a real outbound call
 
-```bash
-# Using Docker Compose
-docker-compose up --build
+1. Log in or create an account.
+2. Go to **Leads**, add a lead with an Indian mobile number (for example `9876543210`, normalized to `+919876543210`).
+3. Select **Live call** on the Leads page, or use the home call console and choose **Live ElevenLabs + Exotel**.
+4. Click **Call now** / **Live call**.
+5. The backend returns `status: initiated` once ElevenLabs accepts the request. This does **not** mean the call was answered.
+6. After the call ends, ElevenLabs sends `post_call_transcription` to the webhook. The CRM updates automatically with transcript, summary, sentiment, outcome and next action.
+7. View results under **Calls** and **Dashboard**.
 
-# Or build and run individually:
-docker build -t calleros/backend ./backend
-docker build -t calleros/frontend ./frontend
-docker-compose up
-```
-
-## API Endpoints
-
-### Leads API
-- `GET /api/v1/leads` - List leads with filtering and pagination
-- `POST /api/v1/leads` - Create a new lead
-- `GET /api/v1/leads/{id}` - Get a single lead by ID
-- `PATCH /api/v1/leads/{id}` - Update a lead
-
-### Analytics API
-- `GET /api/v1/analytics/dashboard` - Get dashboard metrics
-
-### Conversations API
-- `POST /api/v1/conversations/simulate` - Run AI conversation simulator (demo mode)
-- `POST /api/v1/conversations/qualify` - AI lead qualification
-- `POST /api/v1/conversations/knowledge-search` - Search knowledge base
-- `POST /api/v1/conversations/followup` - Schedule follow-up
-- `POST /api/v1/conversations/end-call` - Complete call and update CRM
-
-### Vapi API
-- `POST /api/v1/vapi/outbound-call` - Initiate Vapi outbound call
-- `POST /api/v1/vapi/webhook` - Vapi call event webhook
-- `POST /api/v1/vapi/authenticate` - Vapi assistant authentication
-
-## Docker Deployment
-
-### Build and Run
+To check a call manually:
 
 ```bash
-# Using Docker Compose (recommended)
-docker-compose up --build
-
-# Or build and run individually
-docker build -t calleros/backend ./backend
-docker build -t calleros/frontend ./frontend
-docker-compose up
+curl http://127.0.0.1:8000/api/v1/calls/<call_id>/insights
 ```
 
-### Environment Variables in Docker
-
-Set environment variables when running containers:
+If the webhook was missed, force a provider sync:
 
 ```bash
-docker run -d \
-  -p 8000:8000 \
-  -p 3000:3000 \
-  -e GROQ_API_KEY=your_groq_key \
-  -e SUPABASE_URL=your_supabase_url \
-  -e SUPABASE_ANON_KEY=your_supabase_anon_key \
-  -e SUPABASE_SERVICE_ROLE_KEY=your_service_role_key \
-  -e VAPI_ASSISTANT_ID=your_assistant_id \
-  -e VAPI_PUBLIC_KEY=your_public_key \
-  -e VAPI_SECRET_KEY=your_secret_key \
-  -e SECRET_KEY=calleros-super-secret-key-change-in-production \
-  calleros/backend
+curl -X POST http://127.0.0.1:8000/api/v1/calls/<call_id>/sync
 ```
 
-## Production Checklist
+## 7. Testing
 
-### 1. Security
-- [ ] Keep VAPI_SECRET_KEY secret - never expose in frontend
-- [ ] Use Supabase production URLs and keys
-- [ ] Set a strong SECRET_KEY
-- [ ] Enable HTTPS for production deployment
-- [ ] Configure CORS properly for your domain
+Automated tests use mocks and never place a real call:
 
-### 2. Database
-- [ ] Run Alembic migrations: `alembic upgrade head`
-- [ ] Set up regular backups of Supabase PostgreSQL
-- [ ] Configure connection pooling for high traffic
-
-### 3. Vapi Configuration
-- [ ] Set up Vapi assistant with proper call handling
-- [ ] Configure webhook endpoints for call events
-- [ ] Test call flow in demo mode before going live
-- [ ] Set up call recording and storage if needed
-
-### 4. Monitoring
-- [ ] Set up error tracking (Sentry, etc.)
-- [ ] Log FastAPI requests and responses
-- [ ] Monitor Supabase database performance
-- [ ] Track Vapi call metrics and duration
-
-### 5. Scaling
-- [ ] Configure connection pooling for PostgreSQL
-- [ ] Set up Redis caching for frequently accessed data
-- [ ] Implement rate limiting for API endpoints
-- [ ] Configure CDN for static frontend assets
-
-## Development Workflow
-
-### 1. Local Development
 ```bash
-# Terminal 1 - Backend
-cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-# Terminal 2 - Frontend  
-cd frontend && npm run dev
+py -3.11 -m unittest discover -s tests -v
+npm run lint
+npm run build
 ```
 
-### 2. Testing
-```bash
-# Run tests (when Python 3 available)
-python -m pytest tests/
+Manual live-call checklist:
 
-# Manual testing
-# - Register/login via Supabase Auth
-# - Create and manage leads
-# - Run demo conversations
-# - Test Vapi integration in demo mode
-```
+- [ ] `GET /api/calls/config` shows `live_ready: true`
+- [ ] Webhook URL is publicly reachable
+- [ ] Webhook secret is configured
+- [ ] Imported Exotel number is outbound-capable
+- [ ] Lead has consent to be called
 
-### 3. Deployment
-```bash
-# Push to GitHub
-git add .
-git commit -m "Milestone 9: Tests, Docker and deployment docs"
-git push
+## 8. Database migrations
 
-# Deploy to Vercel (frontend)
-vercel --prod
+The migration `d0fd1ed2b278_replace_vapi_with_elevenlabs_exotel.py`:
 
-# Deploy to Render or Supabase (backend)
-# Or use Docker Compose for full stack deployment
-```
+- drops the obsolete `vapi_call_id` column and index
+- adds `provider`, `conversation_id`, `exotel_call_sid`, `initiation_status`, `call_outcome`, `qualification_json`, `followup_required` and `error_message`
+- preserves existing lead/call data
 
-## File Structure
+## 9. Remaining manual configuration
 
-```
-D:/voice automate/
-├── Dockerfile              # Root-level Dockerfile
-├── docker-compose.yml      # Docker Compose configuration
-├── requirements.txt        # Python dependencies
-├── .env                    # Environment variables
-├── alembic.ini           # Database migration config
-├── migrations/           # Alembic migration scripts
-├── app/                  # Backend (FastAPI + SQLAlchemy)
-│   ├── main.py           # FastAPI application
-│   ├── core/             # Configuration and settings
-│   ├── models/           # SQLAlchemy models (9 tables)
-│   ├── schemas/          # Pydantic schemas
-│   ├── tools/            # 9 validated backend tools
-│   ├── services/         # Business logic layer
-│   └── api/v1/           # API route handlers
-├── frontend/             # Frontend (Next.js 16)
-│   ├── app/              # Next.js App Router
-│   ├── components/       # shadcn/ui components
-│   ├── package.json      # npm dependencies
-│   └── tailwind.config.js # Tailwind CSS configuration
-├── test_milestone9.py    # Test suite
-└── plan.txt              # Full requirements document
-```
-
-## Support
-
-For issues or questions:
-- Check the [Supabase documentation](https://supabase.com/docs)
-- Check the [Vapi documentation](https://vapi.ai/docs)
-- Check the [FastAPI documentation](https://fastapi.tiangolo.com)
-- Check the [Next.js documentation](https://nextjs.org/docs)
-
-## Version
-AI CallerOS - Milestone 9 Complete
+- Activate `ELEVENLABS_AGENT_ID` if still empty.
+- Add `ELEVENLABS_WEBHOOK_SECRET` from the ElevenLabs webhook screen.
+- Add `ELEVENLABS_WEBHOOK_URL` (public URL, not localhost).
+- Confirm Exotel region matches your account cluster.
+- Confirm the prospect has consented before calling.

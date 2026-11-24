@@ -1,17 +1,10 @@
-import { cn } from "@/lib/utils"
+import * as React from "react";
 
-export interface CardProps {
-  className?: string
-}
-
-export function Card({ className, ...props }: CardProps) {
+export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <section
-      className={cn(
-        "rounded-lg border border-border bg-card p-6 shadow-sm",
-        className,
-      )}
+    <div
+      className={`rounded-lg border border-[#1f1f23] bg-[#121215] p-6 ${className || ""}`}
       {...props}
     />
-  )
+  );
 }

@@ -1,52 +1,104 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
 class QualificationOutput(BaseModel):
-    """Structured output from AI lead qualification."""
-    lead_status: str = Field(
-        ..., description "Lead status: new, qualified, interested, not_interested"
-    )
-    interest: str = Field(
-        ..., description "Interest level: low, medium, high"
-    )
-    requirements: str = Field(
-        ..., description "Lead requirements or pain points extracted from conversation"
-    )
-    sentiment: str = Field(
-        ..., description "Conversation sentiment: positive, negative, neutral"
-    )
-    call_outcome: str = Field(
-        ..., description "Call outcome: interested, not_interested, callback, appointment_booked"
-    )
-    next_action: str = Field(
-        ..., description "Recommended next action"
-    )
+    lead_status: str = Field(..., description="Lead status")
+    interest: str = Field(..., description="Interest level")
+    requirements: str = Field(..., description="Extracted requirements")
+    sentiment: str = Field(..., description="Conversation sentiment")
+    call_outcome: str = Field(..., description="Call outcome")
+    next_action: str = Field(..., description="Recommended next action")
 
 
 class ConversationTurn(BaseModel):
-    """Represents a single turn in the conversation."""
-    speaker: str = Field(..., description "Speaker: user or agent")
-    text: str = Field(..., description "The conversation text")
-    timestamp: datetime = Field(
-        default_factory=datetime.now, description "Turn timestamp"
-    )
+    speaker: str
+    text: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class ConversationSummary(BaseModel):
-    """Summary of a completed conversation."""
-    lead_id: str = Field(..., description "Associated lead ID")
-    transcript: str = Field(..., description "Full conversation transcript")
-    qualification: QualificationOutput = Field(
-        ..., description "Structured qualification data"
-    )
-    summary: str = Field(
-        ..., description "Brief conversation summary"
-    )
-    duration_seconds: Optional[int] = Field(
-        default=None, description "Call duration in seconds"
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.now, description "Summary creation time"
-    )
+    lead_id: str
+    transcript: str
+    qualification: QualificationOutput
+    summary: str
+    duration_seconds: Optional[int] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class FollowupCreate(BaseModel):
+    lead_id: str
+    scheduled_at: str
+    notes: Optional[str] = None
+
+
+class FollowupResponse(BaseModel):
+    id: str
+    lead_id: str
+    user_id: str
+    scheduled_at: datetime
+    status: str
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class CallCreate(BaseModel):
+    lead_id: str
+    phone_number: Optional[str] = None
+    mode: str = "demo"
+
+
+class CallResponse(BaseModel):
+    id: str
+    lead_id: str
+    provider: str = "elevenlabs_exotel"
+    conversation_id: Optional[str] = None
+    exotel_call_sid: Optional[str] = None
+    direction: str
+    status: str
+    initiation_status: str = "submitted"
+    call_outcome: Optional[str] = None
+    followup_required: bool = False
+    error_message: Optional[str] = None
+    phone_number: Optional[str] = None
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+    duration_seconds: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class TranscriptOut(BaseModel):
+    id: str
+    call_id: str
+    content: str
+    created_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class CallSummaryOut(BaseModel):
+    id: str
+    call_id: str
+    summary: str
+    sentiment: str
+    call_outcome: Optional[str] = None
+    requirements: Optional[str] = None
+    interest: str
+    next_action: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class CallInsightsResponse(BaseModel):
+    call: CallResponse
+    live_transcript: Optional[str] = None
+    transcript: Optional[TranscriptOut] = None
+    summary: Optional[CallSummaryOut] = None
+    qualification: Optional[QualificationOutput] = None

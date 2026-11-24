@@ -1,93 +1,58 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from collections import Counter
+
+from fastapi import APIRouter, Depends
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from sqlalchemy import func, select, cast, Integer as SQLInteger
-from typing import List, Optional
 
-from ...db.session import get_db
-from ...models import Lead, Call, Followup, Profile
-from ...schemas.lead import LeadResponse
+from app.api.deps import get_current_user_id
+from app.db.session import get_db
+from app.models import Call, Followup, Lead
 
-
-router = APIRouter(prefix="/v1/analytics", tags=["analytics"])
+router = APIRouter(tags=["analytics"])
 
 
-@router.get("/dashboard", response_model=dict)
-async def dashboard_metrics(
-    db: Session = Depends(get_db),
-):
-    """Get dashboard metrics for the leads dashboard."""
-    
-    # Total leads
-    total_leads = db.scalar(select(func.count(Lead.id)))
-    
-    # Leads by status
-    status_query = (
-        select(Lead.status, func.count(Lead.id))
-        .group_by(Lead.status)
-    )
-    status_results = db.execute(status_query).all()
-    leads_by_status = {status: count for status, count in status_results}
-    
-    # Leads by interest level
-    interest_query = (
-        select(Lead.interest_level, func.count(Lead.id))
-        .group_by(Lead.interest_level)
-    )
-    interest_results = db.execute(interest_query).all()
-    leads_by_interest = {level: count for level, count in interest_results}
-    
-    # Total calls
-    total_calls = db.scalar(select(func.count(Call.id)))
-    
-    # Completed calls
-    completed_calls = db.scalar(
-        select(func.count(Call.id)).where(Call.status == "completed")
-    )
-    
-    # Active follow-ups
-    active_followups = db.scalar(
-        select(func.count(Followup.id)).where(Followup.status == "pending")
-    )
-    
-    # Recent activity - last 5 leads created
-    recent_leads_query = (
-        select(Lead.id, Lead.name, Lead.email, Lead.created_at)
-        .order_by(Lead.created_at.desc())
-        .limit(5)
-    )
-    recent_leads = db.execute(recent_leads_query).all()
-    
-    # Calls over time (last 7 days data structure)
-    # Simple placeholder for now
-    calls_over_time = {
-        "labels": ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"],
-        "data": [0, 0, 0, 0, 0, 0, 0],
-    }
-    
-    # Sentiment distribution
-    sentiment_query = (
-        select(Lead.sentiment, func.count(Lead.id))
-        .group_by(Lead.sentiment)
-    )
-    sentiment_results = db.execute(sentiment_query).all()
-    sentiment_distribution = {sentiment: count for sentiment, count in sentiment_results}
-    
+def _metrics(user_id: str, db: Session) -> dict:
+    leads = list(db.scalars(select(Lead).where(Lead.owner_id == user_id)).all())
+    calls = list(db.scalars(select(Call).join(Lead).where(Lead.owner_id == user_id)).all())
+    followups = list(db.scalars(select(Followup).where(Followup.user_id == user_id)).all())
+
+    status_counts = Counter(lead.status for lead in leads)
+    interest_counts = Counter(lead.interest_level for lead in leads)
+    sentiment_counts = Counter(lead.sentiment for lead in leads)
+
+    recent = sorted(leads, key=lambda lead: lead.created_at or 0, reverse=True)[:5]
+
     return {
-        "total_leads": total_leads or 0,
-        "leads_by_status": leads_by_status,
-        "leads_by_interest": leads_by_interest,
-        "total_calls": total_calls or 0,
-        "completed_calls": completed_calls or 0,
-        "active_followups": active_followups or 0,
+        "total_leads": len(leads),
+        "leads_by_status": dict(status_counts),
+        "leads_by_interest": dict(interest_counts),
+        "total_calls": len(calls),
+        "completed_calls": sum(1 for call in calls if call.status == "completed"),
+        "active_followups": sum(1 for followup in followups if followup.status == "pending"),
         "recent_leads": [
             {
-                "id": str(lead.id),
+                "id": lead.id,
                 "name": lead.name,
                 "email": lead.email,
+                "status": lead.status,
+                "interest_level": lead.interest_level,
                 "created_at": lead.created_at.isoformat() if lead.created_at else None,
             }
-            for lead in recent_leads
+            for lead in recent
         ],
-        "calls_over_time": calls_over_time,
-        "sentiment_distribution": sentiment_distribution,
+        "calls_over_time": {
+            "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            "data": [0, 0, 0, 0, 0, 0, 0],
+        },
+        "sentiment_distribution": dict(sentiment_counts),
     }
+
+
+@router.get("/dashboard")
+@router.get("")
+@router.get("/")
+async def dashboard(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    return _metrics(user_id, db)
