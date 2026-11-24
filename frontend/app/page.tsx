@@ -16,6 +16,7 @@ type Insights = {
     conversation_id: string | null;
     exotel_call_sid: string | null;
     initiation_status: string;
+    error_message: string | null;
     duration_seconds: number | null;
   };
   live_transcript: string | null;
@@ -307,6 +308,11 @@ export default function HomePage() {
           </div>
         )}
         {error && <p className="relative mt-4 text-[12px] text-[#ffb4ab]">{error}</p>}
+        {insights?.call.error_message && (
+          <p className="relative mt-4 text-[12px] text-[#ffb4ab]">
+            Provider error: {insights.call.error_message}
+          </p>
+        )}
 
         {insights?.qualification && (
           <div className="relative mt-6 grid gap-4 border-t border-[#1f1f23] pt-6 md:grid-cols-4">

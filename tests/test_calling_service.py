@@ -171,6 +171,63 @@ class OutboundCallTests(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 409)
 
 
+class ProviderFailureTests(unittest.TestCase):
+    def setUp(self):
+        self.db = make_db()
+        self.lead = Lead(
+            id="lead-fail-1",
+            name="Failure Lead",
+            email="fail@example.com",
+            phone="+919876543210",
+            status="new",
+            owner_id=DEMO_USER_ID,
+        )
+        self.db.add(self.lead)
+        self.db.commit()
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_http_200_success_false_is_reported(self):
+        class FailClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                return None
+
+            async def post(self, *args, **kwargs):
+                return FakeResponse(
+                    {
+                        "success": False,
+                        "message": "424: exotel_connect_failed",
+                    }
+                )
+
+        with patch.object(settings, "elevenlabs_api_key", "test-key"), patch.object(
+            settings, "elevenlabs_agent_id", "test-agent"
+        ), patch.object(
+            settings, "elevenlabs_phone_number_id", "test-number"
+        ), patch.object(
+            calling_service.httpx, "AsyncClient", FailClient
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                asyncio.run(
+                    calling_service.initiate_call(
+                        self.db, DEMO_USER_ID, "9876543210", self.lead.id, mode="live"
+                    )
+                )
+
+        self.assertEqual(ctx.exception.status_code, 502)
+        self.assertIn("exotel_connect_failed", ctx.exception.detail)
+        failed = self.db.query(Call).filter(Call.lead_id == self.lead.id).first()
+        self.assertEqual(failed.status, "failed")
+        self.assertIn("exotel_connect_failed", failed.error_message)
+
+
 class WebhookTests(unittest.TestCase):
     def setUp(self):
         self.db = make_db()

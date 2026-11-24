@@ -16,6 +16,7 @@ from app.schemas.qualification import (
 from app.services.calling_service import (
     calling_config,
     initiate_call,
+    refresh_call_status,
     sync_call_from_provider,
 )
 
@@ -124,6 +125,12 @@ async def get_call_insights(
     )
     if not call:
         raise HTTPException(status_code=404, detail="Call not found")
+
+    if call.conversation_id and call.status not in {"completed", "failed"}:
+        try:
+            await refresh_call_status(call, db)
+        except Exception:
+            pass
 
     transcript = db.query(Transcript).filter(Transcript.call_id == call_id).first()
     summary = db.query(CallSummary).filter(CallSummary.call_id == call_id).first()

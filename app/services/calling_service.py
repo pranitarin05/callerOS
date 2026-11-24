@@ -234,11 +234,17 @@ async def initiate_call(
         data = {}
 
     if not data.get("success"):
+        provider_message = str(
+            data.get("message") or "Provider did not accept the call"
+        )
         call.status = "failed"
         call.initiation_status = "failed"
-        call.error_message = str(data.get("message") or "Provider did not accept the call")
+        call.error_message = provider_message[:1000]
         db.commit()
-        raise HTTPException(status_code=502, detail="ElevenLabs did not initiate the call")
+        raise HTTPException(
+            status_code=502,
+            detail=f"ElevenLabs did not initiate the call: {provider_message}",
+        )
 
     call.conversation_id = data.get("conversation_id")
     call.exotel_call_sid = data.get("callSid")
@@ -465,6 +471,39 @@ async def process_webhook(payload: dict, db: Session) -> Dict[str, Any]:
         return {"status": "ignored", "reason": "audio_only", "call_id": call.id}
 
     return {"status": "ignored", "reason": "unsupported_event", "type": event_type}
+
+
+async def refresh_call_status(call: Call, db: Session) -> Optional[Dict[str, Any]]:
+    """Poll ElevenLabs for a live call so the UI updates without a webhook."""
+    if not call.conversation_id or call.status in {"completed", "failed"}:
+        return None
+    data = await fetch_conversation(call.conversation_id)
+    if not data:
+        return None
+
+    provider_status = str(data.get("status") or "").lower()
+    if provider_status == "done":
+        return await process_conversation_data(call, data, db)
+
+    if provider_status == "failed":
+        metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+        error = metadata.get("error") if isinstance(metadata.get("error"), dict) else {}
+        call.status = "failed"
+        call.initiation_status = "failed"
+        call.error_message = str(error.get("reason") or "Provider reported call failure")[:1000]
+        call.ended_at = datetime.utcnow()
+        db.commit()
+        db.refresh(call)
+        return {"status": "processed", "call_id": call.id, "provider_status": "failed"}
+
+    if provider_status in {"initiated", "in-progress", "processing"}:
+        call.status = provider_status
+        call.initiation_status = "answered" if provider_status == "in-progress" else "submitted"
+        db.commit()
+        db.refresh(call)
+        return {"status": "updated", "call_id": call.id, "provider_status": provider_status}
+
+    return None
 
 
 async def sync_call_from_provider(call_id: str, db: Session) -> Dict[str, Any]:
