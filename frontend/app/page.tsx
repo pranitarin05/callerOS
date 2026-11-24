@@ -55,7 +55,7 @@ function Icon({ name, className = "text-[18px]" }: { name: string; className?: s
 }
 
 export default function HomePage() {
-  const [mode, setMode] = useState<Mode>("demo");
+  const [mode, setMode] = useState<Mode>("live");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [name, setName] = useState("");
@@ -289,7 +289,9 @@ export default function HomePage() {
             />
           </div>
           <div className="flex items-end">
-            <Button onClick={startCall} disabled={busy || active} variant="secondary" className="w-full">Call now</Button>
+            <Button onClick={startCall} disabled={busy || active} variant="secondary" className="w-full">
+              {mode === "live" ? "Call now • LIVE" : "Call now • DEMO"}
+            </Button>
           </div>
         </div>
 

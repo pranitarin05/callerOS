@@ -27,7 +27,7 @@ export default function LeadsPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [callMode, setCallMode] = useState<"demo" | "live">("demo");
+  const [callMode, setCallMode] = useState<"demo" | "live">("live");
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "" });
 
   const load = useCallback(() => {
