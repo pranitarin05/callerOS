@@ -2,11 +2,7 @@
 
 AI CallerOS is an AI-powered Voice Agent + CRM SaaS application that manages leads, places real outbound calls through ElevenLabs Conversational AI with Exotel telephony, captures transcripts/summaries/sentiment, and schedules follow-ups.
 
-## 🚀 Local app
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://127.0.0.1:8000`
-- API docs: `http://127.0.0.1:8000/docs`
 
 ## 📋 Project overview
 
