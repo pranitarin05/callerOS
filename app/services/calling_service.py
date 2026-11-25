@@ -17,7 +17,9 @@ from sqlalchemy.orm import Session
 
 from app.core.ai import generate_qualification
 from app.core.config import settings
-from app.models import Call, CallSummary, Lead
+from app.core.language import resolve_language
+from app.models import Appointment, Call, CallSummary, Followup, Lead
+from app.services import agent_config_service, appointment_service, memory_service
 from app.services.lead_service import LeadService
 from app.tools import ConversationSimulator, update_lead
 from app.tools.transcripts import (
@@ -31,6 +33,16 @@ logger = logging.getLogger(__name__)
 
 OUTBOUND_URL = f"{settings.elevenlabs_api_base_url}/v1/convai/exotel/outbound-call"
 DUPLICATE_WINDOW_SECONDS = 60
+
+
+def _provider_hint(message: str) -> str:
+    lower = (message or "").lower()
+    if "exotel_connect_failed" in lower or "http 403" in lower:
+        return (
+            " Exotel denied the destination. On a trial account only verified/whitelisted "
+            "numbers can be called; whitelist the number or complete Exotel KYC to call any number."
+        )
+    return ""
 
 
 def normalize_phone_number(value: str) -> str:
@@ -104,7 +116,10 @@ def _find_recent_duplicate(db: Session, lead_id: Optional[str], phone: str) -> O
 
 
 def _demo_call(call: Call, lead: Lead, db: Session) -> Dict[str, Any]:
-    conversation = ConversationSimulator.run_demo_conversation(lead_name=lead.name)
+    conversation = ConversationSimulator.run_demo_conversation(
+        lead_name=lead.name,
+        language=lead.preferred_language or settings.default_language,
+    )
     process_call_completion(call.id, conversation["transcript"], db)
     call.status = "completed"
     call.initiation_status = "completed"
@@ -196,9 +211,14 @@ async def initiate_call(
                 "lead_id": lead.id,
                 "crm_user_id": user_id,
                 "prospect_name": lead.name,
+                "language": lead.preferred_language or settings.default_language,
+                "lead_memory": memory_service.get_memory_context(db, lead.id),
             },
         },
     }
+    override = agent_config_service.get_override(db, user_id)
+    if override:
+        payload["conversation_initiation_client_data"]["conversation_config_override"] = override
 
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
@@ -225,7 +245,7 @@ async def initiate_call(
         detail = response.text[:300] if response.text else "no error body"
         raise HTTPException(
             status_code=502,
-            detail=f"ElevenLabs rejected request ({response.status_code}): {detail}",
+            detail=f"ElevenLabs rejected request ({response.status_code}): {detail}.{_provider_hint(detail)}",
         )
 
     try:
@@ -239,11 +259,12 @@ async def initiate_call(
         )
         call.status = "failed"
         call.initiation_status = "failed"
-        call.error_message = provider_message[:1000]
+        hint = _provider_hint(provider_message)
+        call.error_message = (provider_message + hint)[:1000]
         db.commit()
         raise HTTPException(
             status_code=502,
-            detail=f"ElevenLabs did not initiate the call: {provider_message}",
+            detail=f"ElevenLabs did not initiate the call: {provider_message}.{hint}",
         )
 
     call.conversation_id = data.get("conversation_id")
@@ -384,6 +405,16 @@ async def process_conversation_data(call: Call, data: dict, db: Session) -> Dict
     if analysis.get("call_successful") == "failure":
         qualification["call_outcome"] = "not_interested"
 
+    lead = LeadService.get_lead_details(call.lead_id, db) if call.lead_id else None
+    language = resolve_language(
+        transcript,
+        lead.preferred_language if lead else settings.default_language,
+    )
+    call.language = language
+    if lead:
+        lead.preferred_language = language
+        lead.last_contact_at = datetime.utcnow()
+
     store_transcript(call.id, transcript, db)
     store_call_summary(
         call_id=call.id,
@@ -423,7 +454,6 @@ async def process_conversation_data(call: Call, data: dict, db: Session) -> Dict
     if data.get("conversation_id") and not call.conversation_id:
         call.conversation_id = str(data["conversation_id"])
 
-    lead = LeadService.get_lead_details(call.lead_id, db) if call.lead_id else None
     if lead:
         update_lead(
             call.lead_id,
@@ -436,11 +466,63 @@ async def process_conversation_data(call: Call, data: dict, db: Session) -> Dict
             lead.owner_id,
             db,
         )
+        await memory_service.update_memory(
+            db,
+            call.lead_id,
+            transcript,
+            str(summary),
+            qualification,
+            language,
+        )
+
+    if qualification.get("call_outcome") == "appointment_booked" and lead:
+        _ensure_appointment_followup(call, lead, db)
 
     call.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(call)
     return {"status": "processed", "call_id": call.id, "qualification": qualification}
+
+
+def _ensure_appointment_followup(call: Call, lead: Lead, db: Session) -> None:
+    """If the agent did not book during the call, create a follow-up to schedule it."""
+    existing = (
+        db.query(Appointment)
+        .filter(
+            Appointment.lead_id == lead.id,
+            Appointment.status.in_({"scheduled", "confirmed", "reminder"}),
+            Appointment.scheduled_at > datetime.utcnow(),
+        )
+        .first()
+    )
+    if existing:
+        scheduled_at = existing.scheduled_at
+        notes = f"Reminder: appointment ({existing.title}) at {scheduled_at.isoformat()}"
+    else:
+        scheduled_at = appointment_service.next_fallback_time(db, str(lead.owner_id))
+        notes = "Appointment requested during call - confirm and schedule it"
+
+    duplicate = (
+        db.query(Followup)
+        .filter(
+            Followup.lead_id == lead.id,
+            Followup.scheduled_at == scheduled_at,
+            Followup.status == "pending",
+        )
+        .first()
+    )
+    if duplicate:
+        return
+    db.add(
+        Followup(
+            id=str(uuid4()),
+            lead_id=lead.id,
+            user_id=str(lead.owner_id),
+            scheduled_at=scheduled_at,
+            status="pending",
+            notes=notes,
+        )
+    )
 
 
 async def process_webhook(payload: dict, db: Session) -> Dict[str, Any]:

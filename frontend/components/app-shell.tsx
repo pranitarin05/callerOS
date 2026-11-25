@@ -12,6 +12,7 @@ const links = [
   { href: "/leads", label: "Leads" },
   { href: "/calls", label: "Calls" },
   { href: "/followups", label: "Follow-ups" },
+  { href: "/appointments", label: "Appointments" },
   { href: "/knowledge", label: "Knowledge" },
   { href: "/settings", label: "Settings" },
 ];
@@ -33,7 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-6">
           <div className="flex items-center gap-10">
             <Link href="/" className="font-display text-[17px] font-semibold text-white">
-              AI CallerOS
+              Caller OS
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
               {links.map((link) => {

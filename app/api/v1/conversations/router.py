@@ -13,7 +13,9 @@ from app.schemas.qualification import QualificationOutput
 from app.services.lead_service import LeadService
 from app.tools import (
     ConversationSimulator,
+    book_appointment,
     end_call,
+    get_available_slots,
     get_lead_details,
     schedule_followup,
     search_company_knowledge,
@@ -161,6 +163,37 @@ async def create_followup(
     result = schedule_followup(lead_id, scheduled_at, user_id, db)
     if not result:
         raise HTTPException(status_code=400, detail="Invalid lead, owner, or scheduled_at")
+    return result
+
+
+@router.post("/available-slots")
+async def available_slots(
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    days = int(payload.get("days") or 3)
+    return get_available_slots(user_id, db, days=days)
+
+
+@router.post("/book-appointment")
+async def create_appointment(
+    payload: dict,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    lead_id = str(payload.get("lead_id") or "")
+    scheduled_at = str(payload.get("scheduled_at") or "")
+    result = book_appointment(
+        lead_id,
+        scheduled_at,
+        user_id,
+        db,
+        title=str(payload.get("title") or "Product demo"),
+        notes=str(payload.get("notes") or ""),
+    )
+    if not result:
+        raise HTTPException(status_code=400, detail="Invalid lead or slot unavailable")
     return result
 
 

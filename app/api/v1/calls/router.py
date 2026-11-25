@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -25,7 +26,15 @@ public_router = APIRouter(tags=["calls"])
 
 
 def _response(call: Call) -> CallResponse:
-    return CallResponse.model_validate(call, from_attributes=True)
+    response = CallResponse.model_validate(call, from_attributes=True)
+    if call.summary and call.summary.sentiment:
+        response.sentiment = call.summary.sentiment
+    elif call.qualification_json:
+        try:
+            response.sentiment = json.loads(call.qualification_json).get("sentiment")
+        except (TypeError, ValueError):
+            pass
+    return response
 
 
 async def initiate_endpoint(

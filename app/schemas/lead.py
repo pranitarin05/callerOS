@@ -11,6 +11,7 @@ class LeadCreate(BaseModel):
     company: Optional[str] = None
     source: Optional[str] = None
     notes: Optional[str] = None
+    preferred_language: Optional[str] = None
 
 
 class LeadUpdate(BaseModel):
@@ -26,6 +27,7 @@ class LeadUpdate(BaseModel):
     next_action: Optional[str] = None
     source: Optional[str] = None
     notes: Optional[str] = None
+    preferred_language: Optional[str] = None
 
 
 class LeadResponse(BaseModel):
@@ -42,6 +44,8 @@ class LeadResponse(BaseModel):
     next_action: Optional[str] = None
     source: Optional[str] = None
     notes: Optional[str] = None
+    preferred_language: str = "auto"
+    last_contact_at: Optional[datetime] = None
     owner_id: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

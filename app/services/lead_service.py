@@ -11,6 +11,7 @@ ALLOWED_UPDATE_FIELDS = {
     "name", "email", "phone", "company", "status",
     "interest_level", "requirements", "sentiment",
     "call_outcome", "next_action", "notes", "source",
+    "preferred_language", "last_contact_at",
 }
 
 
@@ -29,6 +30,7 @@ class LeadService:
         company: Optional[str] = None,
         source: Optional[str] = None,
         notes: Optional[str] = None,
+        preferred_language: Optional[str] = None,
     ) -> Lead:
         lead = Lead(
             id=str(uuid4()),
@@ -41,6 +43,7 @@ class LeadService:
             sentiment="neutral",
             source=source,
             notes=notes,
+            preferred_language=preferred_language or "auto",
             owner_id=owner_id,
         )
         db.add(lead)

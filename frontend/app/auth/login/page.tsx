@@ -50,7 +50,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md py-10">
       <Card>
         <h1 className="text-xl font-semibold">
-          {mode === "signin" ? "Log in to AI CallerOS" : "Create your account"}
+          {mode === "signin" ? "Log in to Caller OS" : "Create your account"}
         </h1>
         <p className="mt-2 text-sm text-slate-400">
           Use your email address and password. No confirmation email is needed.

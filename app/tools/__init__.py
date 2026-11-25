@@ -66,32 +66,20 @@ def update_lead(
 def search_company_knowledge(query: str, owner_id: str, db: Session) -> List[Dict[str, Any]]:
     if not query or not isinstance(query, str):
         return []
-    q = query.strip().lower()[:300]
-    knowledge = [
-        {
-            "id": "kb-followup",
-            "title": "Follow-up Best Practices",
-            "content": "Follow up within 24 hours. Reference specific requirements discussed on the call.",
-            "keywords": ["follow", "followup", "callback", "next"],
-        },
-        {
-            "id": "kb-qualification",
-            "title": "Lead Qualification Criteria",
-            "content": "Qualify on need, urgency, budget, authority, and fit.",
-            "keywords": ["qualify", "qualification", "budget", "interest"],
-        },
-        {
-            "id": "kb-objection",
-            "title": "Handling Objections",
-            "content": "Acknowledge the concern, clarify value, and offer a human callback when requested.",
-            "keywords": ["objection", "expensive", "human", "callback", "handoff"],
-        },
-    ]
-    results = []
-    for item in knowledge:
-        if any(word in q for word in item["keywords"]) or q in item["content"].lower():
-            results.append({k: v for k, v in item.items() if k != "keywords"})
-    return results[:5]
+    from app.services import rag_service
+
+    results = rag_service.search(query, owner_id or DEMO_USER_ID, db)
+    if results:
+        return [
+            {
+                "id": item["id"],
+                "title": item["title"],
+                "content": item["content"],
+                "relevance_score": item["relevance_score"],
+            }
+            for item in results
+        ]
+    return rag_service.builtin_search(query)
 
 
 def _parse_future_datetime(value: str) -> Optional[datetime]:
@@ -137,6 +125,33 @@ def schedule_followup(lead_id: str, scheduled_at: str, user_id: str, db: Session
     db.commit()
     db.refresh(followup)
     return _followup_to_dict(followup)
+
+
+def get_available_slots(user_id: str, db: Session, days: int = 3) -> List[str]:
+    from app.services import appointment_service
+
+    return appointment_service.get_available_slots(db, user_id or DEMO_USER_ID, days=days)
+
+
+def book_appointment(
+    lead_id: str,
+    scheduled_at: str,
+    user_id: str,
+    db: Session,
+    title: str = "Product demo",
+    notes: str = "",
+) -> Optional[Dict[str, Any]]:
+    from app.services import appointment_service
+
+    return appointment_service.book_appointment(
+        db,
+        user_id=user_id or DEMO_USER_ID,
+        lead_id=lead_id,
+        scheduled_at=scheduled_at,
+        title=title,
+        notes=notes,
+        allow_outside_hours=False,
+    )
 
 
 def _followup_to_dict(followup: Followup) -> Dict[str, Any]:
@@ -211,20 +226,54 @@ def end_call(call_id: str, outcome: str, db: Session) -> Optional[Dict[str, Any]
 class ConversationSimulator:
     """Deterministic demo conversation; no telephony credentials required."""
 
+    LOCALIZED = {
+        "hi": [
+            "नमस्ते, मैं AI CallerOS का AI सहायक हूँ। क्या मै {name} से बात कर सकता हूँ?",
+            "हाँ, मैं यही हूँ। मेरे पास कुछ मिनट हैं।",
+            "क्या आप ग्राहक फ़ॉलो-अप स्वचालित करने के बारे में बात कर सकते हैं?",
+            "हाँ, हम अक्सर नए लीड्स को फ़ॉलो अप करना भूल जाते हैं।",
+            "आपका मुख्य चुनौती क्या है?",
+            "हमें ग्राहक फ़ॉलो-अप स्वचालित करने और रुचि समझने की ज़रूरत है।",
+            "आप कब तक इसे शुरू करना चाहेंगे?",
+            "हम जल्द शुरू करना चाहेंगे, अगले कुछ सप्ताह में।",
+            "क्या आप प्रोडक्ट डेमो चाहेंगे या कॉलबैक?",
+            "प्रोडक्ट डेमो अच्छा रहेगा, कृपया शेड्यूल करें।",
+        ],
+        "hinglish": [
+            "Namaste, main AI CallerOS ka AI assistant hoon. Kya main {name} se baat kar sakta hoon?",
+            "Haan, main yahi hoon. Mere paas kuch minute hain.",
+            "Kya aap customer follow-ups automate karne ke baare mein baat kar sakte hain?",
+            "Haan, hum aksar naye leads ko follow up karna bhool jaate hain.",
+            "Aapki main challenge kya hai?",
+            "Humein customer follow-up automate karne aur interested leads samajhne ki zarurat hai.",
+            "Aap kab tak shuru karna chahte hain?",
+            "Hum jaldi shuru karna chahte hain, agle kuch hafte mein.",
+            "Kya aap product demo chahte hain ya human callback?",
+            "Product demo achha rahega, please schedule kar do.",
+        ],
+    }
+
     @staticmethod
-    def run_demo_conversation(lead_name: str = "Prospect") -> Dict[str, Any]:
-        turns = [
-            {"speaker": "agent", "text": f"Hello, this is an AI assistant calling from AI CallerOS. May I speak with {lead_name}?"},
-            {"speaker": "user", "text": "Yes, this is them. I have a few minutes."},
-            {"speaker": "agent", "text": "Are you available to talk about how we can help automate your customer follow-ups?"},
-            {"speaker": "user", "text": "Yes. We often forget to follow up with new leads."},
-            {"speaker": "agent", "text": "What is the main challenge you want to solve?"},
-            {"speaker": "user", "text": "We need to automate customer follow-ups and understand which leads are interested."},
-            {"speaker": "agent", "text": "How soon are you looking to implement a solution?"},
-            {"speaker": "user", "text": "We would like to start soon, ideally in the next few weeks."},
-            {"speaker": "agent", "text": "Would you like a product demo or a human callback?"},
-            {"speaker": "user", "text": "A product demo would be great. Please schedule one."},
-        ]
+    def run_demo_conversation(lead_name: str = "Prospect", language: str = "en") -> Dict[str, Any]:
+        localized = ConversationSimulator.LOCALIZED.get((language or "en").strip().lower())
+        if localized:
+            turns = [
+                {"speaker": "agent" if index % 2 == 0 else "user", "text": text.format(name=lead_name)}
+                for index, text in enumerate(localized)
+            ]
+        else:
+            turns = [
+                {"speaker": "agent", "text": f"Hello, this is an AI assistant calling from AI CallerOS. May I speak with {lead_name}?"},
+                {"speaker": "user", "text": "Yes, this is them. I have a few minutes."},
+                {"speaker": "agent", "text": "Are you available to talk about how we can help automate your customer follow-ups?"},
+                {"speaker": "user", "text": "Yes. We often forget to follow up with new leads."},
+                {"speaker": "agent", "text": "What is the main challenge you want to solve?"},
+                {"speaker": "user", "text": "We need to automate customer follow-ups and understand which leads are interested."},
+                {"speaker": "agent", "text": "How soon are you looking to implement a solution?"},
+                {"speaker": "user", "text": "We would like to start soon, ideally in the next few weeks."},
+                {"speaker": "agent", "text": "Would you like a product demo or a human callback?"},
+                {"speaker": "user", "text": "A product demo would be great. Please schedule one."},
+            ]
 
         qualification = {
             "lead_status": "qualified",

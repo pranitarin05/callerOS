@@ -4,7 +4,7 @@ import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
-  title: "AI CallerOS",
+  title: "Caller OS",
   description: "AI Voice Agent + CRM SaaS",
 };
 

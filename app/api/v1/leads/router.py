@@ -7,6 +7,7 @@ from app.api.deps import get_current_user_id
 from app.db.session import get_db
 from app.schemas.lead import LeadCreate, LeadResponse, LeadUpdate
 from app.services.lead_service import LeadService
+from app.services.memory_service import memory_to_dict, get_memory
 
 router = APIRouter(tags=["leads"])
 
@@ -31,6 +32,7 @@ async def create_lead(
         company=payload.company,
         source=payload.source,
         notes=payload.notes,
+        preferred_language=payload.preferred_language,
     )
     return _response(lead)
 
@@ -66,6 +68,18 @@ async def get_lead(
     if not lead or str(lead.owner_id) != str(user_id):
         raise HTTPException(status_code=404, detail="Lead not found")
     return _response(lead)
+
+
+@router.get("/{lead_id}/memory")
+async def get_lead_memory(
+    lead_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    lead = LeadService.get_lead_details(lead_id, db)
+    if not lead or str(lead.owner_id) != str(user_id):
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return memory_to_dict(get_memory(db, lead_id))
 
 
 @router.patch("/{lead_id}", response_model=LeadResponse)

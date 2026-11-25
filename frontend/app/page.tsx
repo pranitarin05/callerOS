@@ -166,7 +166,7 @@ export default function HomePage() {
         </div>
         <div className="flex max-w-4xl flex-col gap-3">
           <h1 className="font-display text-[40px] font-semibold leading-[48px] text-white md:text-[56px] md:leading-[64px]">
-            Inbound &amp; outbound voice, handled entirely by AI.
+            Outbound voice, handled entirely by AI.
           </h1>
           <p className="max-w-2xl text-[16px] leading-[26px] text-[#a1a1aa]">
             Qualify leads, capture conversations, analyse sentiment and update your CRM automatically.
@@ -304,7 +304,7 @@ export default function HomePage() {
             )}
             {!callingConfig.webhook_configured && (
               <p className="text-[12px] text-[#ffb4ab]">
-                Add a public ELEVENLABS_WEBHOOK_URL and ELEVENLABS_WEBHOOK_SECRET to receive transcript and sentiment after the call.
+                  Post-call webhook is not active. Set ELEVENLABS_WEBHOOK_URL and ELEVENLABS_WEBHOOK_SECRET in .env, then restart the backend.
               </p>
             )}
           </div>
@@ -367,21 +367,6 @@ export default function HomePage() {
                 <span>{step.foot}</span><span className="font-mono text-white">{step.value}</span>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="surface-panel p-6">
-        <div className="mb-6 flex flex-col justify-between gap-3 border-b border-[#1f1f23] pb-4 md:flex-row md:items-center">
-          <div>
-            <div className="font-label text-[#71717a]">Architectural integrity</div>
-            <h3 className="mt-1 text-[20px] font-medium text-white">Enterprise stack integration</h3>
-          </div>
-          <div className="flex items-center gap-2 text-[12px] text-[#71717a]"><span className="h-2 w-2 rounded-full bg-white" /> Typed schemas, ownership enforced</div>
-        </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-          {["Next.js 16", "FastAPI", "SQLAlchemy", "ElevenLabs", "Exotel"].map((item) => (
-            <div key={item} className="rounded bg-[#09090b] p-4 text-[13px] font-medium text-white">{item}</div>
           ))}
         </div>
       </section>

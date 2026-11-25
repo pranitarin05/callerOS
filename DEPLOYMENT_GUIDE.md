@@ -63,6 +63,29 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 # App
 SECRET_KEY=change-this-secret
+
+# Browser WebRTC voice
+ELEVENLABS_WEB_AGENT_ID=        # optional; defaults to ELEVENLABS_AGENT_ID
+ELEVENLABS_TOOL_SECRET=         # random string; used by X-ElevenLabs-Tool-Secret
+VOICE_SESSION_MAX_MINUTES=15
+
+# RAG (local embeddings, no API key)
+EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+EMBEDDINGS_CACHE_DIR=./.cache/embeddings
+RAG_CHUNK_SIZE=700
+RAG_CHUNK_OVERLAP=120
+RAG_TOP_K=5
+
+# Appointment scheduler
+BUSINESS_TIMEZONE=Asia/Kolkata
+BUSINESS_HOURS_START=9
+BUSINESS_HOURS_END=18
+APPOINTMENT_SLOT_MINUTES=30
+APPOINTMENT_WEEKDAYS=0,1,2,3,4
+
+# Memory / languages
+DEFAULT_LANGUAGE=auto
+MEMORY_MAX_CHARS=4000
 ```
 
 `.env` is gitignored. Never commit real values.
@@ -168,13 +191,61 @@ Manual live-call checklist:
 - [ ] Imported Exotel number is outbound-capable
 - [ ] Lead has consent to be called
 
+## 7b. Browser voice, agent tools, RAG and appointments
+
+### Browser voice (WebRTC)
+1. Make sure the ElevenLabs agent is enabled for the browser/WebRTC channel with language detection (Hindi / English / Hinglish) turned on. Language mirroring during the call is handled by the ElevenLabs agent; the backend detects and stores the language from the transcript afterwards.
+2. `GET /api/v1/voice/config` must show `voice_ready: true`.
+3. Open a lead and click **Talk to agent**. The backend requests a conversation token from ElevenLabs; the API key never reaches the browser. Live transcript lines are posted to `/api/v1/voice/transcript`, and `/api/v1/voice/complete` runs the same qualification/summary/memory pipeline as the webhook.
+
+### Agent server tools
+1. Set `ELEVENLABS_TOOL_SECRET` to a random string.
+2. In the ElevenLabs agent, register server tools pointing at:
+   `POST https://<your-public-host>/api/webhooks/elevenlabs/tools`
+   with header `X-ElevenLabs-Tool-Secret: <ELEVENLABS_TOOL_SECRET>`.
+3. Available tools: `get_lead_details`, `update_lead`, `search_knowledge`, `schedule_followup`, `book_appointment`, `get_available_slots`, `end_call`.
+4. If the agent does not book during the call, post-call processing creates a follow-up to schedule the appointment (fallback).
+
+### RAG
+1. First run downloads the multilingual embedding model into `EMBEDDINGS_CACHE_DIR` (~470 MB).
+2. Upload txt/md/pdf from the **Knowledge** page, or `POST /api/v1/knowledge/documents/upload`.
+3. The agent's `search_knowledge` tool returns the top `RAG_TOP_K` chunks. Built-in FAQs are used when no documents are indexed.
+
+### Appointments
+1. Business hours/timezone come from `BUSINESS_TIMEZONE`, `BUSINESS_HOURS_START/END`, `APPOINTMENT_WEEKDAYS` and `APPOINTMENT_SLOT_MINUTES`.
+2. View/book at **Appointments**. `tzdata` is included so timezone names work on Windows.
+
+### Custom agent script
+1. Open **Settings** to edit the first message and system prompt. These are saved per user and sent as `conversation_config_override` on outbound and browser calls.
+2. Available placeholders: `{{prospect_name}}`, `{{language}}`, `{{lead_memory}}`, `{{call_id}}`, `{{lead_id}}`.
+3. The override toggles for `first_message`, `language` and `prompt.prompt` are enabled on the ElevenLabs agent (`platform_settings.overrides.conversation_config_override`). If you recreate the agent, re-enable them.
+4. Language: the agent's default language is Hindi with Hinglish mode enabled, and the `language_detection` system tool plus an English preset are configured. If a caller speaks Hindi, the agent responds in Hindi/Hinglish; if they speak English, the detection tool can switch to English. Setting `auto` in Settings keeps this behavior. Forcing `en` or `hi` overrides only the starting language.
+
 ## 8. Database migrations
 
-The migration `d0fd1ed2b278_replace_vapi_with_elevenlabs_exotel.py`:
+- `d0fd1ed2b278_replace_vapi_with_elevenlabs_exotel.py` replaces Vapi with ElevenLabs + Exotel fields.
+- `f1a2b3c4d5e6_add_rag_appointments_memory_voice.py` adds `knowledge_chunks`, `appointments`, `lead_memories`, plus `preferred_language`/`last_contact_at` on leads, `language`/`channel` on calls, and RAG status fields on knowledge documents.
+- `f2b3c4d5e6f7_add_agent_script_overrides.py` adds `first_message` and `language` to `agent_configs`.
+- Run `py -3.11 -m alembic upgrade head` before starting the app. SQLite uses batch ALTER; data is preserved.
 
-- drops the obsolete `vapi_call_id` column and index
-- adds `provider`, `conversation_id`, `exotel_call_sid`, `initiation_status`, `call_outcome`, `qualification_json`, `followup_required` and `error_message`
-- preserves existing lead/call data
+## 8b. Why a call to another number fails with `exotel_connect_failed` / HTTP 403
+
+If calls to your own number succeed but a friend's number fails with:
+
+```
+424: {'type': 'failed_dependency', 'code': 'upstream_service_error',
+      'message': 'Exotel Connect API returned HTTP 403',
+      'status': 'exotel_connect_failed'}
+```
+
+the credentials, region and agent are fine — Exotel is **denying that destination**. In an Exotel trial account, outbound calls are only allowed to verified/whitelisted numbers. Your own number works because it is verified; a friend's number is not.
+
+Fixes (any one):
+1. **Whitelist the number** in Exotel dashboard → Settings → Whitelist Numbers → add `+91...` → OTP verification (trial allows up to 10 numbers).
+2. **Complete Exotel KYC / upgrade from trial** to call any number.
+3. Confirm the account has balance and the number is not DND-blocked (check with Exotel Number Metadata API).
+
+Also confirm `EXOTEL_REGION` in `.env` matches the dashboard cluster. This account is on **`api.exotel.com`**; the old value `api.in.exotel.com` returned 401 on direct API checks. ElevenLabs stores its own region for the imported number, so the 403 is not caused by this env value, but it should still be correct.
 
 ## 9. Remaining manual configuration
 

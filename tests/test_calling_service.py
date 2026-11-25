@@ -89,6 +89,14 @@ class CallingConfigTests(unittest.TestCase):
         self.assertEqual(config["provider"], "elevenlabs_exotel")
         self.assertIn("groq_configured", config)
 
+    def test_exotel_403_hint(self):
+        hint = calling_service._provider_hint(
+            "424: failed_dependency Exotel Connect API returned HTTP 403"
+        )
+        self.assertIn("whitelist", hint)
+        self.assertIn("KYC", hint)
+        self.assertEqual(calling_service._provider_hint("other error"), "")
+
 
 class OutboundCallTests(unittest.TestCase):
     def setUp(self):
@@ -285,8 +293,17 @@ class WebhookTests(unittest.TestCase):
         )
         self.generation_patch.start()
 
+        async def fake_memory(*args, **kwargs):
+            return None
+
+        self.memory_patch = patch.object(
+            calling_service.memory_service, "update_memory", new=fake_memory
+        )
+        self.memory_patch.start()
+
     def tearDown(self):
         self.generation_patch.stop()
+        self.memory_patch.stop()
         self.db.close()
 
     def test_webhook_processing_is_idempotent(self):

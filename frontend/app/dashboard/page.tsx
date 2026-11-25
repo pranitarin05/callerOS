@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -22,6 +24,12 @@ type Metrics = {
   leads_by_status: Record<string, number>;
   leads_by_interest: Record<string, number>;
   sentiment_distribution: Record<string, number>;
+  calls_over_time: { labels: string[]; data: number[] };
+  conversion_rate: number;
+  avg_call_duration_seconds: number;
+  outcomes_breakdown: Record<string, number>;
+  languages_breakdown: Record<string, number>;
+  appointments_scheduled: number;
   recent_leads: Array<{ id: string; name: string; email: string; status: string; interest_level: string; created_at: string | null }>;
 };
 
@@ -30,7 +38,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiFetch<Metrics>("/api/v1/analytics")
+    apiFetch<Metrics>("/api/v1/analytics/insights")
       .then(setData)
       .catch((err: Error) => setError(err.message));
   }, []);
@@ -40,6 +48,10 @@ export default function DashboardPage() {
 
   const statusData = Object.entries(data.leads_by_status || {}).map(([name, value]) => ({ name, value }));
   const sentimentData = Object.entries(data.sentiment_distribution || {}).map(([name, value]) => ({ name, value }));
+  const callsData = (data.calls_over_time?.labels || []).map((label, index) => ({
+    name: label,
+    calls: data.calls_over_time.data[index] || 0,
+  }));
 
   return (
     <div className="space-y-8">
@@ -48,13 +60,28 @@ export default function DashboardPage() {
         <p className="mt-1 text-sm text-slate-400">Business metrics from your CRM.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card><p className="text-sm text-slate-400">Total leads</p><p className="mt-2 text-3xl font-bold">{data.total_leads}</p></Card>
         <Card><p className="text-sm text-slate-400">Total calls</p><p className="mt-2 text-3xl font-bold">{data.total_calls}</p></Card>
         <Card><p className="text-sm text-slate-400">Active follow-ups</p><p className="mt-2 text-3xl font-bold">{data.active_followups}</p></Card>
+        <Card><p className="text-sm text-slate-400">Conversion rate</p><p className="mt-2 text-3xl font-bold">{Math.round((data.conversion_rate || 0) * 100)}%</p></Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <h2 className="mb-4 text-sm font-medium text-slate-300">Calls over the last 7 days</h2>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={callsData}>
+            <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
+            <XAxis dataKey="name" stroke="#94a3b8" />
+            <YAxis stroke="#94a3b8" />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="calls" fill="#818cf8" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <h2 className="mb-4 text-sm font-medium text-slate-300">Leads by status</h2>
           <ResponsiveContainer width="100%" height={260}>
@@ -80,6 +107,16 @@ export default function DashboardPage() {
               <Line type="monotone" dataKey="value" name="Calls" stroke="#34d399" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
+        </Card>
+        <Card>
+          <h2 className="mb-4 text-sm font-medium text-slate-300">Call insights</h2>
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between"><dt className="text-slate-500">Avg duration</dt><dd>{data.avg_call_duration_seconds || 0}s</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">Appointments</dt><dd>{data.appointments_scheduled || 0}</dd></div>
+            {Object.entries(data.languages_breakdown || {}).map(([name, value]) => (
+              <div key={name} className="flex justify-between"><dt className="text-slate-500">{name}</dt><dd>{value}</dd></div>
+            ))}
+          </dl>
         </Card>
       </div>
 

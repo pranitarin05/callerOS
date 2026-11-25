@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *.db
+.cache/
+ngrok.exe
+ngrok.zip
 .node_modules/
 frontend/node_modules/
 frontend/.next/

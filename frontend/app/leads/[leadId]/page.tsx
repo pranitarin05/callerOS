@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
+import { LiveVoiceAgent } from "@/components/live-voice-agent";
 
 type Lead = {
   id: string;
@@ -19,17 +20,30 @@ type Lead = {
   call_outcome: string | null;
   next_action: string | null;
   notes: string | null;
+  preferred_language: string;
+  last_contact_at: string | null;
+};
+
+type Memory = {
+  summary: string;
+  key_facts: string[];
+  language: string;
+  updated_at: string | null;
 };
 
 export default function LeadDetailsPage() {
   const params = useParams<{ leadId: string }>();
   const [lead, setLead] = useState<Lead | null>(null);
+  const [memory, setMemory] = useState<Memory | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     apiFetch<Lead>(`/api/v1/leads/${params.leadId}`)
       .then(setLead)
       .catch((err: Error) => setError(err.message));
+    apiFetch<Memory>(`/api/v1/leads/${params.leadId}/memory`)
+      .then(setMemory)
+      .catch(() => undefined);
   }, [params.leadId]);
 
   async function setStatus(status: string) {
@@ -65,6 +79,7 @@ export default function LeadDetailsPage() {
             <div><dt className="text-slate-500">Status</dt><dd>{lead.status}</dd></div>
             <div><dt className="text-slate-500">Interest</dt><dd>{lead.interest_level}</dd></div>
             <div><dt className="text-slate-500">Sentiment</dt><dd>{lead.sentiment}</dd></div>
+            <div><dt className="text-slate-500">Preferred language</dt><dd>{lead.preferred_language}</dd></div>
           </dl>
         </Card>
         <Card>
@@ -76,6 +91,20 @@ export default function LeadDetailsPage() {
           </dl>
         </Card>
       </div>
+
+      <LiveVoiceAgent leadId={params.leadId} />
+
+      <Card>
+        <h2 className="mb-3 text-sm font-medium text-slate-300">Conversation memory</h2>
+        {!memory?.summary ? (
+          <p className="text-sm text-slate-500">No conversation memory yet. It is created after a call.</p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-300">{memory.summary}</p>
+            <p className="mt-2 text-xs text-slate-500">Language: {memory.language}</p>
+          </>
+        )}
+      </Card>
 
       <Card>
         <h2 className="mb-4 text-sm font-medium text-slate-300">Change status</h2>

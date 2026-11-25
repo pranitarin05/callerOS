@@ -68,6 +68,7 @@ class CallResponse(BaseModel):
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
     duration_seconds: Optional[int] = None
+    sentiment: Optional[str] = None
     created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}

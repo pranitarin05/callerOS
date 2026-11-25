@@ -91,3 +91,46 @@ async def generate_qualification(transcript: str, fallback: dict) -> dict:
                 continue
 
     return clean_fallback
+
+
+async def summarize_memory(previous: str, new_text: str, language: str = "en") -> Optional[str]:
+    """Merge prior memory and a new call into a compact summary; never raises."""
+    combined = "\n".join(part for part in [previous or "", new_text or ""] if part).strip()
+    if not combined:
+        return None
+    if not settings.groq_api_keys:
+        return combined[:4000]
+
+    prompt = (
+        "You maintain a CRM contact memory. Merge the previous memory with the new call notes "
+        "into one concise factual summary (max 120 words). Keep names, requirements, objections, "
+        f"agreed next steps and the preferred language ({language}). Do not invent facts. "
+        "Return plain text only."
+    )
+    for api_key in settings.groq_api_keys:
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                response = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.groq_model,
+                        "temperature": 0.1,
+                        "max_tokens": 300,
+                        "messages": [
+                            {"role": "system", "content": prompt},
+                            {"role": "user", "content": combined[:12000]},
+                        ],
+                    },
+                )
+            if response.status_code != 200:
+                continue
+            text = response.json()["choices"][0]["message"]["content"].strip()
+            if text:
+                return text
+        except Exception:
+            continue
+    return combined[:4000]

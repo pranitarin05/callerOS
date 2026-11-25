@@ -38,6 +38,32 @@ class Settings:
         "ELEVENLABS_AGENT_NAME", "Student Project Demo Qualifier"
     )
 
+    # Browser WebRTC voice channel
+    elevenlabs_web_agent_id: str = os.getenv("ELEVENLABS_WEB_AGENT_ID", "")
+    elevenlabs_tool_secret: str = os.getenv("ELEVENLABS_TOOL_SECRET", "")
+    voice_session_max_minutes: int = int(os.getenv("VOICE_SESSION_MAX_MINUTES", "15"))
+
+    # RAG (local multilingual embeddings)
+    embedding_model: str = os.getenv(
+        "EMBEDDING_MODEL",
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    )
+    embeddings_cache_dir: str = os.getenv("EMBEDDINGS_CACHE_DIR", "./.cache/embeddings")
+    rag_chunk_size: int = int(os.getenv("RAG_CHUNK_SIZE", "700"))
+    rag_chunk_overlap: int = int(os.getenv("RAG_CHUNK_OVERLAP", "120"))
+    rag_top_k: int = int(os.getenv("RAG_TOP_K", "5"))
+
+    # Appointment scheduler (internal)
+    business_timezone: str = os.getenv("BUSINESS_TIMEZONE", "Asia/Kolkata")
+    business_hours_start: int = int(os.getenv("BUSINESS_HOURS_START", "9"))
+    business_hours_end: int = int(os.getenv("BUSINESS_HOURS_END", "18"))
+    appointment_slot_minutes: int = int(os.getenv("APPOINTMENT_SLOT_MINUTES", "30"))
+    appointment_weekdays: str = os.getenv("APPOINTMENT_WEEKDAYS", "0,1,2,3,4")
+
+    # Memory + multilingual
+    default_language: str = os.getenv("DEFAULT_LANGUAGE", "auto")
+    memory_max_chars: int = int(os.getenv("MEMORY_MAX_CHARS", "4000"))
+
     exotel_account_sid: str = os.getenv("EXOTEL_ACCOUNT_SID", "")
     exotel_api_key: str = os.getenv("EXOTEL_API_KEY", "")
     exotel_api_token: str = os.getenv("EXOTEL_API_TOKEN", "")
@@ -77,6 +103,23 @@ class Settings:
             and self.elevenlabs_agent_id
             and self.elevenlabs_phone_number_id
         )
+
+    @property
+    def web_agent_id(self) -> str:
+        return self.elevenlabs_web_agent_id or self.elevenlabs_agent_id
+
+    @property
+    def voice_ready(self) -> bool:
+        return bool(self.elevenlabs_api_key and self.web_agent_id)
+
+    @property
+    def allowed_weekdays(self) -> list:
+        days = []
+        for chunk in self.appointment_weekdays.split(","):
+            chunk = chunk.strip()
+            if chunk.isdigit() and 0 <= int(chunk) <= 6:
+                days.append(int(chunk))
+        return days or [0, 1, 2, 3, 4]
 
 
 settings = Settings()
